@@ -9,10 +9,10 @@
 #define __YINSPIRE__BINARY_HEAP__
 
 /*
- * DEPENDENCIES: uint must be defined as unsigned integer
+ * DEPENDENCIES:
+ *   * uint must be defined as unsigned integer
+ *   * Ruby macros ALLOC etc.
  */
-
-#include "memory_allocator.h"
 
 /*
  * An implicit Binary Heap.
@@ -46,7 +46,7 @@ class BinaryHeap
 
       ~BinaryHeap()
       {
-        MemoryAllocator::free<T>(@elements);
+        free(@elements);
         @elements = NULL;
       }
 
@@ -231,11 +231,11 @@ class BinaryHeap
          */
         if (@elements != NULL)
         {
-          @elements = MemoryAllocator::realloc_n<T>(@elements, @capacity+1);
+          REALLOC_N(@elements, T, @capacity+1);
         }
         else
         {
-          @elements = MemoryAllocator::alloc_n<T>(@capacity+1);
+          @elements = ALLOC_N(T, @capacity+1);
         }
       }
 
