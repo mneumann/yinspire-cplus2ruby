@@ -54,7 +54,7 @@ class NeuralEntity
   # If the entity has events in the future, this is the timestamp of the
   # next event.
   #
-  property :schedule_at, 'stime'
+  property :schedule_at, 'stime', default: '%s = INFINITY'
 
   #
   # If stepped scheduling is used, these two properties reference the
@@ -84,6 +84,29 @@ class NeuralEntity
   # and as it's quite low overhead (12 bytes).
   #
   property :stimuli_pq, 'BinaryHeap<Stimulus>', :internal => true
+
+
+  #
+  # Helper code for method +stimuli_pq_to_a+.
+  #
+  helper_code %{
+    static void
+    dump_stimuli(Stimulus& s, VALUE ary)
+    {
+      rb_ary_push(ary, rb_float_new(s.at));
+      rb_ary_push(ary, rb_float_new(s.weight));
+    }
+  }
+
+  #
+  # Returns a Ruby array in the form [at1, weight1, at2, weight2] 
+  # for +stimuli_pq+.
+  #
+  method :stimuli_pq_to_a, {returns: Object}, %{
+    VALUE ary = rb_ary_new(); 
+    @stimuli_pq.each<VALUE>(dump_stimuli, ary);
+    return ary;
+  }
 
   # 
   # Dump the internal state of a NeuralEntity and return it. Internal
@@ -136,9 +159,13 @@ class NeuralEntity
   # Stimulate an entity +at+ a specific time with a specific +weight+
   # and from a specific +source+.
   #
+  # Default behaviour is to add the stimuli to the local priority queue.
+  #
   # Overwrite!
   #
-  method :stimulate, {at: 'stime', weight: 'real', source: NeuralEntity}, nil, virtual: true
+  method :stimulate, {at: 'stime', weight: 'real', source: NeuralEntity}, %{
+    stimuli_add(at, weight);
+  }, virtual: true
 
   #
   # This method is called when a NeuralEntity reaches it's scheduling
@@ -232,7 +259,7 @@ class NeuralEntity
     static bool
     stimuli_accum(Stimulus &parent, Stimulus &element, real tolerance)
     {
-      if ((element.at - parent.at) <= tolerance)
+      if ((element.at - parent.at) < tolerance)
       {
         if (isinf(element.weight))
         {

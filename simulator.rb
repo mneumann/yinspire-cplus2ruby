@@ -82,6 +82,6 @@ class Simulator
   # method to reflect the change within the priority queue.
   #
   method :schedule_update, {entity: NeuralEntity}, %{
-    @schedule_pq.update(entity);
+    @schedule_pq.push_or_update(entity);
   }
 end
