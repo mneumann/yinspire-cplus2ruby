@@ -11,12 +11,12 @@ class Simulator
   #
   # The time step used for stepped scheduling.
   #
-  property :schedule_step, 'stime'
+  property :schedule_step, 'stime', default: '%s = INFINITY'
 
   #
   # The time of the next step.
   #
-  property :schedule_next_step, 'stime'
+  property :schedule_next_step, 'stime', default: '%s = INFINITY'
 
   #
   # The tolerance (time difference) up to which local stimuli are
@@ -30,8 +30,8 @@ class Simulator
   property :schedule_pq, 'IndexedBinaryHeap<NeuralEntity*, NeuralEntity>', internal: true
 
   #
-  # If stepped scheduling is used, this points to the first enttiy in
-  # the stepped schedule list.
+  # If stepped scheduling is used, this points to the first entiy in the
+  # stepped schedule list.
   #
   property :schedule_stepping_list_root, NeuralEntity
 
