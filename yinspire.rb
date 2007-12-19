@@ -27,6 +27,7 @@ require 'simulator'
 require 'neural_entity'
 require 'neuron'
 require 'synapse'
+require 'neuron_srm_01'
 
 if ENV['YINSPIRE_ALWAYS_RECOMPILE'] or !File.exist?('./yinspire.so') 
   CplusRuby.compile_and_load('yinspire.cc', 
