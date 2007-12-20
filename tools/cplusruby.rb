@@ -454,29 +454,19 @@ class CplusRuby::CodeGenerator
   end
 
   def ruby_init(mod_name, out)
-    @model.each_model_class do |mk|
-      out << "static VALUE #{mk.klass.name}_class__;\n"
-    end
-
     out << %{extern "C" void Init_#{mod_name}()\n}
     out << "{\n"
+    out << "VALUE klass;"
 
     @model.each_model_class do |mk|
-      sc = mk.klass.superclass 
-      if sc == Object
-        sc = "rb_cObject"
-      else
-        sc = "#{sc.name}_class__"
-      end
-      out << %{#{mk.klass.name}_class__ = rb_define_class("#{mk.klass.name}", #{sc});\n}
-
-      out << "rb_define_alloc_func(#{mk.klass.name}_class__, #{mk.klass.name}_alloc__);\n"
+      out << %{klass = rb_eval_string("#{mk.klass.name}");\n}
+      out << "rb_define_alloc_func(klass, #{mk.klass.name}_alloc__);\n"
 
       mp = mk.klass.name
 
       mk.methods.each do |meth| 
         next if meth.options[:internal]
-        out << %{rb_define_method(#{mp}_class__, "#{meth.name}", } 
+        out << %{rb_define_method(klass, "#{meth.name}", } 
         out << %{(VALUE(*)(...))#{mp}_wrap__#{meth.name}, #{meth.arity});\n}
       end
 
@@ -484,11 +474,11 @@ class CplusRuby::CodeGenerator
         next if prop.options[:internal]
 
         # getter
-        out << %{rb_define_method(#{mp}_class__, "#{prop.name}", } 
+        out << %{rb_define_method(klass, "#{prop.name}", } 
         out << %{(VALUE(*)(...))#{mp}_get__#{prop.name}, 0);\n}
 
         # setter
-        out << %{rb_define_method(#{mp}_class__, "#{prop.name}=", } 
+        out << %{rb_define_method(klass, "#{prop.name}=", } 
         out << %{(VALUE(*)(...))#{mp}_set__#{prop.name}, 1);\n}
       end
     end
