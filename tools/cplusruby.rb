@@ -215,7 +215,7 @@ class CplusRuby::Model
       },
       'bool' => { 
         default: '%s = false',
-        ruby2c:  '(!RTEST(%s))',
+        ruby2c:  'RTEST(%s)',
         c2ruby:  '(%s ? Qtrue : Qfalse)',
         ctype:   'bool %s'
       },
@@ -661,6 +661,8 @@ struct RubyObject {
     __obj__ = Qnil;
   }
 
+  virtual ~RubyObject() {};
+
   static void __free(void *ptr) {
     ((RubyObject*)ptr)->__free__();
   }
@@ -670,7 +672,6 @@ struct RubyObject {
   }
 
   virtual void __free__() { delete this; }
-
   virtual void __mark__() { }
 };
 EOS
