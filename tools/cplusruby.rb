@@ -485,21 +485,6 @@ class CplusRuby::CodeGenerator
 
     out << "}\n"
   end
- 
-=begin
-
-    end
-
-    decl << "}\n"
-
-    return [meth, free, mark, alloc, decl].join("\n")
-
-  code << "void\n"
-  code << "Init_#{mod}()\n"
-  code << "{\n"
-  code << init_decl_code
-  code << "}\n"
-=end
 
   def check_type(name, type, out)
     if checktype = @model.get_type_entry(type)[:ruby2c_checktype]
@@ -679,7 +664,6 @@ EOS
 
   def type_aliases(out)
     @model.type_aliases.each do |from, to|
-      #out << "#define #{from} #{to}\n"
       out << "typedef #{to} #{from};"
     end
   end
