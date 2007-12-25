@@ -92,8 +92,8 @@ module Cplus2Ruby
 
     make = RUBY_PLATFORM.match('mswin') ? 'nmake' : 'make'
 
-    self.generate_code(mod)
     Dir.chdir(dir) do
+      self.generate_code(mod)
       system("#{make} clean") if File.exist?('Makefile')
 
       #pid = fork do
