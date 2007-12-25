@@ -46,7 +46,7 @@ class Synapse
   #
   def connect(target)
     raise "target must be Neuron" unless target.kind_of?(Neuron)
-    raise "Synapse already connected" if target.post_neuron || target.next_pre_synapse
+    raise "Synapse already connected" if self.post_neuron || self.next_pre_synapse
 
     self.next_pre_synapse = target.first_pre_synapse
     target.first_pre_synapse = self
@@ -94,5 +94,11 @@ class Synapse
 
   def each_connection
     yield self.post_neuron
+  end
+
+  def load(data)
+    super
+    self.weight = data['weight'] || raise #0.0
+    self.delay = data['delay'] || raise #0.0
   end
 end

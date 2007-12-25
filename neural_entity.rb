@@ -85,7 +85,6 @@ class NeuralEntity
   #
   property :stimuli_pq, 'BinaryHeap<Stimulus>', :internal => true
 
-
   #
   # Helper code for method +stimuli_pq_to_a+.
   #
@@ -114,7 +113,7 @@ class NeuralEntity
   # separatly by the Simulator using +each_connection+.
   #
   def dump
-    # FIXME
+    raise 'FIXME'
   end
 
   #
@@ -124,7 +123,7 @@ class NeuralEntity
   # NeuralEntity is not put in an inconsistent state!
   #
   def load(data)
-    # FIXME
+    raise 'FIXME'
   end
 
   #
@@ -283,7 +282,14 @@ class NeuralEntity
   #
   method :stimuli_add, {at: 'stime', weight: 'real'}, %{
     Stimulus s; s.at = at; s.weight = weight;
-    @stimuli_pq.push_accumulate<real>(s, stimuli_accum, @simulator->stimuli_tolerance);
+    if (@simulator->stimuli_tolerance <= 0.0)
+    {
+      @stimuli_pq.push(s);
+    }
+    else
+    {
+      @stimuli_pq.push_accumulate<real>(s, stimuli_accum, @simulator->stimuli_tolerance);
+    }
     schedule(@stimuli_pq.top().at);
   }
 

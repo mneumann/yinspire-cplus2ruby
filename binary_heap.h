@@ -8,6 +8,8 @@
 #ifndef __YINSPIRE__BINARY_HEAP__
 #define __YINSPIRE__BINARY_HEAP__
 
+#include "memory_allocator.h"
+
 /*
  * DEPENDENCIES:
  *   * uint must be defined as unsigned integer
@@ -223,7 +225,7 @@ class BinaryHeap
     inline void
       resize(uint new_capacity)
       {
-        if (new_capacity < 7) new_capacity = 7;  // minimum capacity!
+        if (new_capacity < 15) new_capacity = 15;  // minimum capacity!
         @capacity = new_capacity; 
 
         /* 
@@ -231,11 +233,11 @@ class BinaryHeap
          */
         if (@elements != NULL)
         {
-          REALLOC_N(@elements, T, @capacity+1);
+          @elements = MemoryAllocator::realloc_n<T>(@elements, @capacity+1);
         }
         else
         {
-          @elements = ALLOC_N(T, @capacity+1);
+          @elements = MemoryAllocator::alloc_n<T>(@capacity+1);
         }
       }
 
@@ -314,7 +316,7 @@ class IndexedBinaryHeap : public BinaryHeap<T,ACC>
         super::propagate_down(index);
       }
 
-    void 
+    inline void 
       push_or_update(T& element)
       {
         if (ACC::bh_index(element) == 0)

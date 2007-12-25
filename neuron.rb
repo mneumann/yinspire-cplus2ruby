@@ -111,4 +111,11 @@ class Neuron
     }
   }
 
+  def load(data)
+    super
+    self.abs_refr_duration = data['abs_refr_duration'] || 0.0
+    self.last_spike_time = data['last_spike_time'] || -INFINITY
+    self.last_fire_time = data['last_fire_time'] || -INFINITY
+    self.hebb = data['hebb'] || false
+  end
 end

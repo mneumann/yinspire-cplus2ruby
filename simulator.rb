@@ -27,7 +27,8 @@ class Simulator
   #
   # Priority queue used to schedule the entities.
   #
-  property :schedule_pq, 'IndexedBinaryHeap<NeuralEntity*, NeuralEntity>', internal: true
+  property :schedule_pq, 'IndexedBinaryHeap<NeuralEntity*, NeuralEntity>', 
+    internal: true
 
   #
   # If stepped scheduling is used, this points to the first entiy in the
@@ -76,6 +77,10 @@ class Simulator
       @schedule_next_step += @schedule_step;
     }
   }
+
+  method :record_fire_event, {at: 'stime', source: NeuralEntity}, %{
+    @fire_counter++;
+  }, inline: true
   
   # 
   # If an entity has changed it's scheduling time, it has to call this
@@ -83,5 +88,73 @@ class Simulator
   #
   method :schedule_update, {entity: NeuralEntity}, %{
     @schedule_pq.push_or_update(entity);
-  }
+  }, inline: true
+
+  attr_reader :entities
+
+  def initialize
+    @entities = Hash.new
+  end
+
+  #
+  #
+  #
+  def load(filename)
+    require 'json'
+    data = JSON.parse(File.read(filename))
+    templates = data['templates']
+    entities = data['entities']
+    connections = data['connections']
+    events = data['events']
+
+    #
+    # construct entities
+    #
+    hash = Hash.new
+    entities.each do |id, entity_spec|
+      type, data = entity_spec
+
+      if t = templates[type]
+        type, template_data = t
+        hash.update(template_data)
+      end
+
+      hash.update(data) if data
+
+      @entities[id] = allocate_entity(type, id, hash)
+    end
+
+    #
+    # connect them
+    #
+    connections.each do |src, destinations|
+      entity = @entities[src]
+      destinations.each do |dest|
+        entity.connect(@entities[dest])
+      end
+    end
+
+    #
+    # stimulate with events
+    #
+    events.each do |id, time_series|
+      entity = @entities[id]
+      time_series.each do |at|
+        entity.stimulate(at, INFINITY, nil)
+      end
+    end
+  end
+
+  private
+
+  def allocate_entity(type, id, data)
+    entity = Object.const_get(type).new
+    entity.id = id
+    entity.simulator = self
+    entity.load(data)
+    entity
+  end
+
+  property :event_counter, 'uint'
+  property :fire_counter, 'uint'
 end
