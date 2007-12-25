@@ -1,8 +1,4 @@
 class Simulator
-  helper_header %{
-    #include "binary_heap.h"
-  }
-
   #
   # The current simulation time.
   #
@@ -27,7 +23,7 @@ class Simulator
   #
   # Priority queue used to schedule the entities.
   #
-  property :schedule_pq, 'IndexedBinaryHeap<NeuralEntity*, NeuralEntity>', 
+  property :schedule_pq, 'IndexedBinaryHeap<NeuralEntity*, MemoryAllocator<NeuralEntity*>, uint, NeuralEntity>', 
     internal: true
 
   #

@@ -3,10 +3,6 @@
 # Neurons and Synapses.
 #
 class NeuralEntity
-  helper_header %{
-    #include "binary_heap.h"
-  }
-
   # 
   # The data structure used for storing a fire impluse or any other form
   # of stimulation.
@@ -83,7 +79,7 @@ class NeuralEntity
   # Nevertheless we put this into the base class for simplicity reasons
   # and as it's quite low overhead (12 bytes).
   #
-  property :stimuli_pq, 'BinaryHeap<Stimulus>', :internal => true
+  property :stimuli_pq, 'BinaryHeap<Stimulus, MemoryAllocator<Stimulus>, uint>', :internal => true
 
   #
   # Helper code for method +stimuli_pq_to_a+.

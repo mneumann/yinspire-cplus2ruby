@@ -10,6 +10,8 @@ SII = {static: true, inline: true, internal: true}
 
 Cplus2Ruby << %{
   #include <math.h>
+  #include "binary_heap.h"
+  #include "memory_allocator.h"
 
   #define real_exp expf
   #define real_fabs fabsf

@@ -8,16 +8,13 @@
 #ifndef __YINSPIRE__BINARY_HEAP__
 #define __YINSPIRE__BINARY_HEAP__
 
-#include "memory_allocator.h"
-
-/*
- * DEPENDENCIES:
- *   * uint must be defined as unsigned integer
- *   * Ruby macros ALLOC etc.
- */
-
 /*
  * An implicit Binary Heap.
+ *
+ *   E: Element type
+ *   I: Index type name
+ *   MA: Memory Allocator
+ *   ACC: Accessor 
  *
  * Example:
  *
@@ -27,14 +24,14 @@
  *     }
  *   }
  *
- *   BinaryHeap<int, acc> heap;
+ *   BinaryHeap<int, MemoryAllocator, unsigned int, acc> heap;
  *   heap.push(4);
  *   heap.pop();
  *   ...
  *
  */
 
-template <class T, class ACC = T>
+template <class E, class MA, typename I = unsigned int, class ACC = E>
 class BinaryHeap
 {
   public:
@@ -48,12 +45,12 @@ class BinaryHeap
 
       ~BinaryHeap()
       {
-        free(@elements);
+        MA::free(@elements);
         @elements = NULL;
       }
 
     void
-      push(const T& element)
+      push(const E& element)
       {
         @size += 1;
         if (@size > @capacity)
@@ -78,7 +75,7 @@ class BinaryHeap
         }
       }
 
-    inline T&
+    inline E&
       top() const
       {
         return @elements[1];  
@@ -93,7 +90,7 @@ class BinaryHeap
       }
 
     bool
-      try_pop(T& element)
+      try_pop(E& element)
       {
         if (empty()) return false;
         element = top();
@@ -101,7 +98,7 @@ class BinaryHeap
         return true;
       }
 
-    inline uint
+    inline I
       get_size() const
       {
         return @size;
@@ -119,7 +116,7 @@ class BinaryHeap
     void
       clear()
       {
-        for (uint i=1; i <= @size; i++)
+        for (I i=1; i <= @size; i++)
         {
           detach_index(i);
         }
@@ -127,14 +124,14 @@ class BinaryHeap
       }
 
     template <typename DATA> void
-      push_accumulate(T& element, bool (*accumulate)(T&,T&,DATA), DATA data)
+      push_accumulate(E& element, bool (*accumulate)(E&,E&,DATA), DATA data)
       {
 
         /*
          * Find the position of the element that is not greater than
          * +element+.
          */ 
-        uint index = @size; 
+        I index = @size; 
         while (index > 1 && ACC::bh_cmp_gt(element_at(index/2), element))
         {
           index /= 2;
@@ -157,9 +154,9 @@ class BinaryHeap
      * Iterate over all elements (non-destructive)
      */
     template <typename DATA> void
-      each(void (*yield)(T&, DATA), DATA data)
+      each(void (*yield)(E&, DATA), DATA data)
       {
-        for (uint i=1; i <= @size; i++)
+        for (I i=1; i <= @size; i++)
         {
           yield(@elements[i], data);
         }
@@ -168,9 +165,9 @@ class BinaryHeap
   protected:
 
     inline void
-      swap_elements(uint i1, uint i2)
+      swap_elements(I i1, I i2)
       {
-        T tmp = @elements[i1];
+        E tmp = @elements[i1];
         @elements[i1] = @elements[i2];
         @elements[i2] = tmp;
 
@@ -178,14 +175,14 @@ class BinaryHeap
         update_index(i2);
       }
 
-    inline T&
-      element_at(uint index)
+    inline E&
+      element_at(I index)
       {
         return @elements[index];
       }
 
     inline void
-      propagate_down(uint index)
+      propagate_down(I index)
       {
         uint min;
 
@@ -213,7 +210,7 @@ class BinaryHeap
       }
 
     inline void
-      propagate_up(uint index)
+      propagate_up(I index)
       {
         while (index > 1 && cmp_gt(index/2, index))
         {
@@ -222,8 +219,8 @@ class BinaryHeap
         }
       }
 
-    inline void
-      resize(uint new_capacity)
+    void
+      resize(I new_capacity)
       {
         if (new_capacity < 15) new_capacity = 15;  // minimum capacity!
         @capacity = new_capacity; 
@@ -233,37 +230,37 @@ class BinaryHeap
          */
         if (@elements != NULL)
         {
-          @elements = MemoryAllocator::realloc_n<T>(@elements, @capacity+1);
+          @elements = MA::realloc_n(@elements, @capacity+1);
         }
         else
         {
-          @elements = MemoryAllocator::alloc_n<T>(@capacity+1);
+          @elements = MA::alloc_n(@capacity+1);
         }
       }
 
     inline bool
-      cmp_gt(uint i1, uint i2)
+      cmp_gt(I i1, I i2)
       {
         return (ACC::bh_cmp_gt(element_at(i1), element_at(i2)));
       }
 
     inline void
-      update_index(uint index)
+      update_index(I index)
       {
         /* DUMMY */
       }
 
     inline void
-      detach_index(uint index)
+      detach_index(I index)
       {
         /* DUMMY */
       }
 
   protected:
 
-    uint capacity;
-    uint size;
-    T*   elements;
+    I  capacity;
+    I  size;
+    E* elements;
 
 };
 
@@ -288,40 +285,40 @@ class BinaryHeap
  * Example:
  *
  *   struct acc {
- *     inline static uint& bh_index(T& e) {
+ *     inline static unsigned int& bh_index(E& e) {
  *       return e.schedule_index;
  *     }
- *     inline static bool bh_cmp_gt(T& e1, T& e2) {
+ *     inline static bool bh_cmp_gt(E& e1, E& e2) {
  *       return (e1.schedule_at > e2.schedule_at);
  *     }
  *   }
  *
- *   IndexedBinaryHeap<T, acc> heap;
+ *   IndexedBinaryHeap<E, MemoryAllocator, unsigned int, acc> heap;
  *   ...
  *
  */
 
-template <class T, class ACC = T> 
-class IndexedBinaryHeap : public BinaryHeap<T,ACC>
+template <class E, class MA, typename I = unsigned int, class ACC = E> 
+class IndexedBinaryHeap : public BinaryHeap<E, MA, I, ACC>
 {
-    typedef BinaryHeap<T,ACC> super; 
+    typedef BinaryHeap<E, MA, I, ACC> super; 
 
   public:
 
     void
-      update(T& element)
+      update(E& element)
       {
-        uint index = ACC::bh_index(element); 
+        I index = ACC::bh_index(element); 
         super::propagate_up(index);
         super::propagate_down(index);
       }
 
     inline void 
-      push_or_update(T& element)
+      push_or_update(E& element)
       {
         if (ACC::bh_index(element) == 0)
         {
-          BinaryHeap<T,ACC>::push(element);
+          super::push(element);
         }
         else
         {
@@ -332,15 +329,15 @@ class IndexedBinaryHeap : public BinaryHeap<T,ACC>
   protected:
 
     inline void
-      update_index(uint i)
+      update_index(I i)
       {
-        ACC::bh_index(BinaryHeap<T,ACC>::element_at(i)) = i;
+        ACC::bh_index(super::element_at(i)) = i;
       }
 
     inline void
-      detach_index(uint i)
+      detach_index(I i)
       {
-        ACC::bh_index(BinaryHeap<T,ACC>::element_at(i)) = 0;
+        ACC::bh_index(super::element_at(i)) = 0;
       }
 
 };

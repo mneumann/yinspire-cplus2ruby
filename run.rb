@@ -1,4 +1,5 @@
 require 'yinspire'
+exit if ARGV.empty?
 
 sim = Simulator.new
 sim.stimuli_tolerance = 0.0 
