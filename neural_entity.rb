@@ -123,7 +123,7 @@ class NeuralEntity
   # NeuralEntity is not put in an inconsistent state!
   #
   def load(data)
-    raise 'FIXME'
+    #raise 'FIXME'
   end
 
   #

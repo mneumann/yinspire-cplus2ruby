@@ -31,9 +31,10 @@ require 'neuron'
 require 'synapse'
 require 'neuron_srm_01'
 
-if ENV['YINSPIRE_ALWAYS_RECOMPILE'] or !File.exist?('./yinspire.so') 
+begin
+  require './work/yinspire.so'
+rescue LoadError
   Cplus2Ruby.compile_and_load('work/yinspire', 
     "-no-integrated-cpp -B ${PWD}/tools -O3 -fomit-frame-pointer -Winline -Wall -I#{Dir.pwd} -I${PWD}", "")
-else
-  require './work/yinspire.so'
+  retry
 end
