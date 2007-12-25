@@ -1,5 +1,5 @@
 #
-# CplusRuby
+# Cplus2Ruby
 #
 # Gluing C++ and Ruby together in an Object-oriented manner.  
 #
@@ -8,7 +8,7 @@
 # License::   Released under the same terms as Ruby itself.
 #
 
-module CplusRuby
+module Cplus2Ruby
 
   # 
   # Global code
@@ -18,7 +18,7 @@ module CplusRuby
   end
 
   def self.model
-    @model ||= CplusRuby::Model.new
+    @model ||= Cplus2Ruby::Model.new
   end
 
   def self.add_type_alias(h)
@@ -26,15 +26,15 @@ module CplusRuby
   end
 
   #
-  # Called when CplusRuby is included in another module or a class.
+  # Called when Cplus2Ruby is included in another module or a class.
   #
   def self.append_features(mod)
     super
     mod.extend(self)
-    CplusRuby.model[mod] # this will register the class
+    Cplus2Ruby.model[mod] # this will register the class
     # also register a subclass
     def mod.inherited(k)
-      CplusRuby.model[k]
+      Cplus2Ruby.model[k]
     end
   end
 
@@ -56,26 +56,24 @@ module CplusRuby
   end
 
   def property(name, type=Object, options={})
-    CplusRuby.model[self].add_property(name, type, options)
+    Cplus2Ruby.model[self].add_property(name, type, options)
   end
 
   def method(name, params, body=nil, options={})
-    CplusRuby.model[self].add_method(name, params, body, options)
+    Cplus2Ruby.model[self].add_method(name, params, body, options)
   end 
 
   def helper_header(body)
-    CplusRuby.model[self].add_helper_header(body)
+    Cplus2Ruby.model[self].add_helper_header(body)
   end
 
   def helper_code(body)
-    CplusRuby.model[self].add_helper_code(body)
+    Cplus2Ruby.model[self].add_helper_code(body)
   end
 
   def self.generate_code(mod)
-    cg = CplusRuby::CodeGenerator.new(CplusRuby.model)
-    str = ""
-    cg.write(mod, str)
-    return str
+    cg = Cplus2Ruby::CodeGenerator.new(Cplus2Ruby.model)
+    cg.write(mod)
   end
 
   #
@@ -94,7 +92,7 @@ module CplusRuby
 
     make = RUBY_PLATFORM.match('mswin') ? 'nmake' : 'make'
 
-    File.open(file, 'w+') {|f| f << self.generate_code(mod) }
+    self.generate_code(mod)
     Dir.chdir(dir) do
       system("#{make} clean") if File.exist?('Makefile')
 
@@ -118,7 +116,7 @@ module CplusRuby
 
 end
 
-class CplusRuby::Model
+class Cplus2Ruby::Model
   attr_reader :type_aliases, :type_map, :code
 
   def initialize
@@ -145,7 +143,7 @@ class CplusRuby::Model
   end
 
   def [](klass)
-    @model_classes[klass] ||= CplusRuby::Model::ModelClass.new(klass)
+    @model_classes[klass] ||= Cplus2Ruby::Model::ModelClass.new(klass)
   end
 
   def each_model_class(&block)
@@ -227,7 +225,7 @@ class CplusRuby::Model
   end
 end
 
-class CplusRuby::Model::ModelClass
+class Cplus2Ruby::Model::ModelClass
   attr_accessor :klass, :properties, :methods, :helper_headers, :helper_codes
 
   def initialize(klass)
@@ -239,7 +237,7 @@ class CplusRuby::Model::ModelClass
   end
 
   def add_property(name, type, options)
-    @properties << CplusRuby::Model::ModelProperty.new(name, type, options) 
+    @properties << Cplus2Ruby::Model::ModelProperty.new(name, type, options) 
   end
 
   def add_helper_header(body)
@@ -251,19 +249,19 @@ class CplusRuby::Model::ModelClass
   end
 
   def add_method(name, params, body, options)
-    @methods << CplusRuby::Model::ModelMethod.new(name, params, body, options)
+    @methods << Cplus2Ruby::Model::ModelMethod.new(name, params, body, options)
   end
 end
 
 
-class CplusRuby::Model::ModelProperty
+class Cplus2Ruby::Model::ModelProperty
   attr_accessor :name, :type, :options
   def initialize(name, type, options)
     @name, @type, @options = name, type, options
   end
 end
 
-class CplusRuby::Model::ModelMethod
+class Cplus2Ruby::Model::ModelMethod
   attr_accessor :name, :params, :body, :options
   def initialize(name, params, body, options)
     @name, @params, @body, @options = name, params, body, options
@@ -276,28 +274,48 @@ class CplusRuby::Model::ModelMethod
   end
 end
 
-class CplusRuby::CodeGenerator
-  def initialize(model=CplusRuby.model)
+class Cplus2Ruby::CodeGenerator
+  def initialize(model=Cplus2Ruby.model)
     @model = model
     @model.expand_type_map!
   end
 
-  def write(mod_name, out)
-    header(out)
-    type_aliases(out)
+  def write(mod_name)
 
-    out << @model.code
+    #
+    # mod_name.h
+    #
+    File.open(mod_name + ".h", 'w+') do |out| 
+      header(out)
+      type_aliases(out)
 
-    forward_class_declarations(out)
-    helper_headers(out)
-    class_declarations(out)
-    class_bodies(out)
+      out << @model.code
 
-    ruby_method_wrappers(out)
-    ruby_property_wrappers(out)
+      forward_class_declarations(out)
+      helper_headers(out)
+      class_declarations(out)
+    end
+    
+    #
+    # mod_name.cc
+    #
+    File.open(mod_name + ".cc", 'w+') do |out| 
+      out << %{#include "#{mod_name}.h"\n\n}
+      class_bodies(out)
+    end
+    
+    #
+    # mod_name_wrap.cc
+    #
+    File.open(mod_name + "_wrap.cc", 'w+') do |out| 
+      out << %{#include "#{mod_name}.h"\n\n}
 
-    ruby_alloc(out)
-    ruby_init(mod_name, out)
+      ruby_method_wrappers(out)
+      ruby_property_wrappers(out)
+
+      ruby_alloc(out)
+      ruby_init(mod_name, out)
+    end
   end
 
   def ruby_alloc(out)
