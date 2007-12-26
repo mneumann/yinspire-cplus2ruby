@@ -12,6 +12,11 @@ Cplus2Ruby << %{
   #include <math.h>
   #include "binary_heap.h"
   #include "memory_allocator.h"
+  #include <string>
+  #include <assert.h>
+  #include "hash.h"
+  #include "json/json.h"
+  #include "json/json_parser.h"
 
   #define real_exp expf
   #define real_fabs fabsf
@@ -33,6 +38,9 @@ require 'neuron'
 require 'synapse'
 require 'neuron_srm_01'
 
+Cplus2Ruby.generate_code('yinspire')
+
+=begin
 begin
   require './work/yinspire.so'
 rescue LoadError
@@ -40,3 +48,4 @@ rescue LoadError
     "-no-integrated-cpp -B ${PWD}/tools -O3 -fomit-frame-pointer -Winline -Wall -I#{Dir.pwd} -I${PWD}", "")
   retry
 end
+=end

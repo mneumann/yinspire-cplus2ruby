@@ -123,16 +123,16 @@ class BinaryHeap
         @size = 0;
       }
 
-    template <typename DATA> void
-      push_accumulate(E& element, bool (*accumulate)(E&,E&,DATA), DATA data)
+    template <typename DATA> bool
+      accumulate(E& element, bool (*accumulator)(E&,const E&,DATA), DATA data)
       {
 
         /*
-         * Find the position of the element that is not greater than
+         * Find the position of the first element that is not greater than
          * +element+.
          */ 
         I index = @size; 
-        while (index > 1 && ACC::bh_cmp_gt(element_at(index/2), element))
+        while (index > 0 && ACC::bh_cmp_gt(element_at(index), element))
         {
           index /= 2;
         }
@@ -144,10 +144,11 @@ class BinaryHeap
          * assert(index == 0 || ACC::bh_cmp_gt(element_at(index), element)); 
          */
 
-        if (index == 0 || !accumulate(@elements[index], element, data))
+        if (index == 0 || !accumulator(@elements[index], element, data))
         {
-          push(element);
+          return false;
         }
+        return true;
       }
 
     /*
@@ -167,16 +168,16 @@ class BinaryHeap
     inline void
       swap_elements(I i1, I i2)
       {
-        E tmp = @elements[i1];
+        @elements[0] = @elements[i1];
         @elements[i1] = @elements[i2];
-        @elements[i2] = tmp;
+        @elements[i2] = @elements[0];
 
         update_index(i1);
         update_index(i2);
       }
 
     inline E&
-      element_at(I index)
+      element_at(I index) const
       {
         return @elements[index];
       }
@@ -184,15 +185,16 @@ class BinaryHeap
     inline void
       propagate_down(I index)
       {
-        uint min;
+        I i2;
 
         while (index*2+1 <= @size)
         {
-          min = cmp_gt(index*2, index*2+1) ? 1 : 0; 
-          if (cmp_gt(index, index*2+min))
+          i2 = index*2 + (cmp_gt(index*2, index*2+1) ? 1 : 0);
+
+          if (cmp_gt(index, i2))
           {
-            swap_elements(index, index*2+min);
-            index = index*2+min;
+            swap_elements(index, i2);
+            index = i2;
           }
           else
           {
@@ -222,7 +224,7 @@ class BinaryHeap
     void
       resize(I new_capacity)
       {
-        if (new_capacity < 15) new_capacity = 15;  // minimum capacity!
+        if (new_capacity < 7) new_capacity = 7;  // minimum capacity!
         @capacity = new_capacity; 
 
         /* 
@@ -239,7 +241,7 @@ class BinaryHeap
       }
 
     inline bool
-      cmp_gt(I i1, I i2)
+      cmp_gt(I i1, I i2) const
       {
         return (ACC::bh_cmp_gt(element_at(i1), element_at(i2)));
       }

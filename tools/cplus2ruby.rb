@@ -125,7 +125,7 @@ class Cplus2Ruby::Model
     @type_map = get_type_map()
     @code = ""
 
-    add_type_alias Object => 'VALUE'
+    #add_type_alias Object => 'VALUE'
   end
 
   def add_type_alias(h)
@@ -156,6 +156,8 @@ class Cplus2Ruby::Model
   def type_encode(type, name)
     if entry = @type_map[type]
       entry[:ctype].gsub("%s", name.to_s)
+    elsif type.include?("%s")
+      type.gsub("%s", name.to_s)
     else
       "#{type} #{name}"
     end
@@ -307,6 +309,7 @@ class Cplus2Ruby::CodeGenerator
     #
     # mod_name_wrap.cc
     #
+=begin
     File.open(mod_name + "_wrap.cc", 'w+') do |out| 
       out << %{#include "#{mod_name}.h"\n\n}
 
@@ -316,6 +319,7 @@ class Cplus2Ruby::CodeGenerator
       ruby_alloc(out)
       ruby_init(mod_name, out)
     end
+=end
   end
 
   def ruby_alloc(out)
@@ -540,30 +544,31 @@ class Cplus2Ruby::CodeGenerator
   end
 
   def class_declaration(model_class, out)
-    out << "struct #{model_class.klass.name} : "
+    out << "struct #{model_class.klass.name}"
     sc = model_class.klass.superclass
     if sc != Object
       sc = sc.name
     else
-      sc = "RubyObject"
+      sc = nil
+      #sc = "RubyObject"
     end
-    out << "#{sc}\n"
+    out << " : #{sc}\n" if sc
 
     out << "{\n"
 
     # superclass shortcut
-    out << "typedef #{sc} super;\n"
+    out << "typedef #{sc} super;\n" if sc
 
     # declaration of constructor
     out << "// Constructor\n"
     out << "#{model_class.klass.name}();\n\n"
 
     # declaration of __mark__ and __free__ methods
-    out << "// mark method\n"
-    out << "virtual void __mark__();\n\n"
+    #out << "// mark method\n"
+    #out << "virtual void __mark__();\n\n"
 
-    out << "// free method\n"
-    out << "virtual void __free__();\n\n"
+    #out << "// free method\n"
+    #out << "virtual void __free__();\n\n"
 
     model_class.properties.each do |prop|
       property(prop, out)
@@ -580,8 +585,8 @@ class Cplus2Ruby::CodeGenerator
     out << model_class.helper_codes.join("\n")
 
     constructor(model_class, out)
-    ruby_mark(model_class, out)
-    ruby_free(model_class, out)
+    #ruby_mark(model_class, out)
+    #ruby_free(model_class, out)
 
     model_class.methods.each do |meth|
       method_body(meth, model_class, out)
@@ -621,7 +626,7 @@ class Cplus2Ruby::CodeGenerator
 
     out << " {\n"
     if meth.body.nil?
-      out << %{rb_raise(rb_eRuntimeError, "abstract method #{meth.name} called");\n}
+      #out << %{rb_raise(rb_eRuntimeError, "abstract method #{meth.name} called");\n}
     else
       out << meth.body
     end
@@ -653,11 +658,10 @@ class Cplus2Ruby::CodeGenerator
 
   def header(out)
     out << <<EOS
-#include "ruby.h"
 #ifndef NULL
 #define NULL 0L
 #endif 
-struct RubyObject {
+/*struct RubyObject {
   VALUE __obj__;
 
   RubyObject() {
@@ -676,7 +680,7 @@ struct RubyObject {
 
   virtual void __free__() { delete this; }
   virtual void __mark__() { }
-};
+}; */
 EOS
   end
 

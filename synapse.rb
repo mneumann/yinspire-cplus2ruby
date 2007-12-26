@@ -44,61 +44,70 @@ class Synapse
   #
   # O(1)
   #
-  def connect(target)
-    raise "target must be Neuron" unless target.kind_of?(Neuron)
-    raise "Synapse already connected" if self.post_neuron || self.next_pre_synapse
+  method :connect, {target: NeuralEntity}, %{
+    Neuron *neuron = dynamic_cast<Neuron*>(target);
 
-    self.next_pre_synapse = target.first_pre_synapse
-    target.first_pre_synapse = self
-    self.post_neuron = target
-  end
+    if (@post_neuron != NULL || @next_pre_synapse != NULL)
+      throw "Synapse already connected";
+
+    @next_pre_synapse = neuron->first_pre_synapse;
+    neuron->first_pre_synapse = this;
+    @post_neuron = neuron;
+  }, virtual: true
 
   #
   # O(n)
   #
-  def disconnect(target)
-    raise "target must be Neuron" unless target.kind_of?(Neuron)
-    raise "Synapse not connected to this Neuron" if self.post_neuron != target
+  method :disconnect, {target: NeuralEntity}, %{
+    Neuron *neuron = dynamic_cast<Neuron*>(target);
 
-    #
-    # Find the synapse in the linked list that precedes +self+.
-    #
-    prev = nil
-    curr = target.first_pre_synapse
+    if (@post_neuron != neuron)
+      throw "Synapse not connected to this Neuron";
 
-    while true
-      break if curr == self
-      break unless curr
-      prev = curr
-      curr = curr.next_pre_synapse
-    end
+    /*
+     * Find the synapse in the linked list that precedes +this+.
+     */
+    Synapse *prev = NULL;
+    Synapse *curr = neuron->first_pre_synapse;
 
-    raise "Synapse not in pre synapse list" if curr != self
+    while (true)
+    {
+      if (curr == NULL) break;
+      if (curr == this) break; 
+      prev = curr;
+      curr = curr->next_pre_synapse;
+    }
 
-    #
-    # Remove ourself (+self+) from linked list.
-    #
-    if prev
-      prev.next_pre_synapse = self.next_pre_synapse
+    if (curr != this)
+      throw "Synapse not in pre synapse list";
+
+    /*
+     * Remove ourself (this) from linked list
+     */
+    if (prev == NULL)
+    {
+      /*
+       * we are the last synapse in the pre synapse list.
+       */
+      assert(neuron->first_pre_synapse == this);
+      neuron->first_pre_synapse = NULL; 
+    }
     else
-      #
-      # we are the last synapse in the pre synapse list.
-      #
-      raise "assert" unless target.first_pre_synapse == self
-      target.first_pre_synapse = nil
-    end
+    {
+      prev->next_pre_synapse = @next_pre_synapse;
+    }
 
-    self.post_neuron = nil
-    self.next_pre_synapse = nil
-  end
+    @post_neuron = NULL;
+    @next_pre_synapse = NULL;
+  }, virtual: true
 
-  def each_connection
-    yield self.post_neuron
-  end
+  method :each_connection, {iter: 'void (*%s)(NeuralEntity*,NeuralEntity*)'}, %{
+    iter(this, @post_neuron);
+  }, virtual: true
 
-  def load(data)
-    super
-    self.weight = data['weight'] || raise #0.0
-    self.delay = data['delay'] || raise #0.0
-  end
+  method :load, {data: 'jsonHash*'}, %{
+    super::load(data);
+    @weight = data->get_number("weight", 0.0);
+    @delay = data->get_number("delay", 0.0);
+  }, virtual: true
 end

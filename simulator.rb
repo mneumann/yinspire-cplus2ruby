@@ -18,7 +18,7 @@ class Simulator
   # The tolerance (time difference) up to which local stimuli are
   # accumulated.
   #
-  property :stimuli_tolerance, 'stime'
+  property :stimuli_tolerance, 'stime', default: '%s = -INFINITY'
 
   #
   # Priority queue used to schedule the entities.
@@ -31,6 +31,19 @@ class Simulator
   # stepped schedule list.
   #
   property :schedule_stepping_list_root, NeuralEntity
+
+  #
+  # Statistics counter
+  #
+  property :event_counter, 'uint'
+  property :fire_counter, 'uint'
+
+  #
+  # An id -> NeuralEntity mapping
+  # 
+  # Contains all entities known by the simulator.
+  #
+  property :entities, 'Hash<std::string, NeuralEntity *>', internal: true
 
   #
   # Start the simulation.
@@ -76,7 +89,7 @@ class Simulator
 
   method :record_fire_event, {at: 'stime', source: NeuralEntity}, %{
     @fire_counter++;
-  }, inline: true
+  }
   
   # 
   # If an entity has changed it's scheduling time, it has to call this
@@ -86,71 +99,110 @@ class Simulator
     @schedule_pq.push_or_update(entity);
   }, inline: true
 
-  attr_reader :entities
+  helper_code %q{
+    struct entities_each_data
+    {
+      Simulator *simulator;
+      jsonHash *templates;
+    };
 
-  def initialize
-    @entities = Hash.new
-  end
+    struct conn_each_data
+    {
+      Simulator *simulator;
+      int index;
+      NeuralEntity *from;
+    };
 
-  #
-  #
-  #
-  def load(filename)
-    require 'json'
-    data = JSON.parse(File.read(filename))
-    templates = data['templates']
-    entities = data['entities']
-    connections = data['connections']
-    events = data['events']
+    static void each_conn(jsonValue *item, void *data)
+    {
+      conn_each_data *d = (conn_each_data*)data;
+      std::string &id = dynamic_cast<jsonString*>(item)->value;
+      NeuralEntity *e = d->simulator->entities[id]; 
+      if (d->index == 0)
+      {
+        d->from = e;
+      }
+      else
+      {
+        d->from->connect(e);
+      }
+      d->index++;
+    }
 
-    #
-    # construct entities
-    #
-    hash = Hash.new
-    entities.each do |id, entity_spec|
-      type, data = entity_spec
+    static void connections_each(jsonValue *item, void *data)
+    {
+      conn_each_data d;
+      d.simulator = (Simulator*)data;
+      d.index = 0;
+      d.from = NULL;
+      dynamic_cast<jsonArray*>(item)->each(each_conn, &d); 
+    }
 
-      if t = templates[type]
-        type, template_data = t
-        hash.update(template_data)
-      end
+    static void entities_each(jsonValue *item, void *data)
+    {
+      entities_each_data *d = (entities_each_data*)data;
 
-      hash.update(data) if data
+      jsonArray *entity_spec = dynamic_cast<jsonArray*>(item);
+      jsonString *id = dynamic_cast<jsonString*>(entity_spec->get(0));
+      jsonString *template_name = dynamic_cast<jsonString*>(entity_spec->get(1));
 
-      @entities[id] = allocate_entity(type, id, hash)
-    end
+      jsonArray *t = dynamic_cast<jsonArray*>(d->templates->get(template_name));
 
-    #
-    # connect them
-    #
-    connections.each do |src, destinations|
-      entity = @entities[src]
-      destinations.each do |dest|
-        entity.connect(@entities[dest])
-      end
-    end
+      jsonString *type = dynamic_cast<jsonString*>(t->get(0));
+      jsonHash *hash = dynamic_cast<jsonHash*>(t->get(1));
 
-    #
-    # stimulate with events
-    #
-    events.each do |id, time_series|
-      entity = @entities[id]
-      time_series.each do |at|
-        entity.stimulate(at, INFINITY, nil)
-      end
-    end
-  end
+      NeuralEntity *entity;
 
-  private
+      if (type->value == "Synapse")
+      {
+        entity = new Synapse();
+      }
+      else
+      {
+        entity = new Neuron_SRM_01();
+      }
 
-  def allocate_entity(type, id, data)
-    entity = Object.const_get(type).new
-    entity.id = id
-    entity.simulator = self
-    entity.load(data)
-    entity
-  end
+      entity->id = dynamic_cast<jsonString*>(id)->value;
+      entity->simulator = d->simulator;
+      d->simulator->entities[entity->id] = entity;
 
-  property :event_counter, 'uint'
-  property :fire_counter, 'uint'
+      entity->load(hash);
+    }
+
+    static void ev_each(jsonValue *val, void *data)
+    {
+      double at = dynamic_cast<jsonNumber*>(val)->value;
+      NeuralEntity *entity = (NeuralEntity*)data;
+      entity->stimulate(at, INFINITY, NULL);  
+    }
+
+    static void events_each(jsonString *id, jsonValue *val, void *data)
+    {
+      Simulator *simulator = (Simulator*)data;
+      NeuralEntity *entity = simulator->entities[id->value];
+      dynamic_cast<jsonArray*>(val)->each(ev_each, entity);
+    }
+  }
+
+  method :load, {filename: 'char*'}, %{
+    jsonHash *data = dynamic_cast<jsonHash*>(jsonParser::parse_file(filename));
+    jsonHash *templates = dynamic_cast<jsonHash*>(data->get("templates"));
+    jsonArray *entities = dynamic_cast<jsonArray*>(data->get("entities"));
+    jsonArray *connections = dynamic_cast<jsonArray*>(data->get("connections"));
+    jsonHash *events = dynamic_cast<jsonHash*>(data->get("events"));
+
+    entities_each_data d;
+    d.templates = templates;
+    d.simulator = this;
+
+    // construct entities
+    entities->each(entities_each, &d);
+
+    // connect 
+    connections->each(connections_each, this);
+
+    // events
+    events->each(events_each, this); 
+  } 
+
 end

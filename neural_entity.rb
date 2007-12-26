@@ -27,7 +27,7 @@ class NeuralEntity
   # Simulator (during loading or constructing a neural net) and SHOULD
   # NOT be changed afterwards (because it's used as a key in a Hash).
   #
-  property :id
+  property :id, 'std::string'
 
   #
   # Each NeuralEntity has a reference back to the Simulator. This is
@@ -81,36 +81,12 @@ class NeuralEntity
   #
   property :stimuli_pq, 'BinaryHeap<Stimulus, MemoryAllocator<Stimulus>, uint>', :internal => true
 
-  #
-  # Helper code for method +stimuli_pq_to_a+.
-  #
-  helper_code %{
-    static void
-    dump_stimuli(Stimulus& s, VALUE ary)
-    {
-      rb_ary_push(ary, rb_float_new(s.at));
-      rb_ary_push(ary, rb_float_new(s.weight));
-    }
-  }
-
-  #
-  # Returns a Ruby array in the form [at1, weight1, at2, weight2] 
-  # for +stimuli_pq+.
-  #
-  method :stimuli_pq_to_a, {returns: Object}, %{
-    VALUE ary = rb_ary_new(); 
-    @stimuli_pq.each<VALUE>(dump_stimuli, ary);
-    return ary;
-  }
-
   # 
   # Dump the internal state of a NeuralEntity and return it. Internal
   # state does not contain the net connections which have to be dumped
   # separatly by the Simulator using +each_connection+.
   #
-  def dump
-    raise 'FIXME'
-  end
+  method :dump, {into: 'jsonHash*'}, nil, virtual: true
 
   #
   # Load the internal state of a NeuralEntity from +data+. Note that
@@ -118,37 +94,38 @@ class NeuralEntity
   # loading, which means that you have to take care that the
   # NeuralEntity is not put in an inconsistent state!
   #
-  def load(data)
-    #raise 'FIXME'
-  end
+  method :load, {data: 'jsonHash*'}, nil, virtual: true
 
   #
   # Connect +self+ with +target+.
   #
-  def connect(target)
-    raise "abstract method"
-  end
-  
-  #
-  # Disconnect +self+ from +target+.
-  #
-  def disconnect(target)
-    raise "abstract method"
-  end
+  method :connect, {target: NeuralEntity}, nil, virtual: true
 
   #
   # Disconnect +self+ from all connections.
   #
-  def disconnect_all
-    each_connection {|conn| disconnect(conn) }
-  end
+  method :disconnect, {target: NeuralEntity}, nil, virtual: true
 
   #
   # Iterates over each connection. To be overwritten by subclasses!
   #
-  def each_connection
-    raise "abstract method"
-  end
+  method :each_connection, {iter: 'void (*%s)(NeuralEntity*,NeuralEntity*)'}, nil,
+    virtual: true
+
+  helper_code %{
+    static void
+    iter_disconnect(NeuralEntity *self, NeuralEntity *conn)
+    {
+      self->disconnect(conn);
+    }
+  }
+
+  #
+  # Disconnect +self+ from all connections.
+  #
+  method :disconnect_all, {}, %{
+    each_connection(iter_disconnect);
+  }
 
   #
   # Stimulate an entity +at+ a specific time with a specific +weight+
@@ -252,24 +229,20 @@ class NeuralEntity
   #
   helper_code %{
     static bool
-    stimuli_accum(Stimulus &parent, Stimulus &element, real tolerance)
+    stimuli_accum(Stimulus &parent, const Stimulus &element, real tolerance)
     {
-      if ((element.at - parent.at) < tolerance)
+      if ((element.at - parent.at) > tolerance) return false;
+
+      if (isinf(element.weight))
       {
-        if (isinf(element.weight))
-        {
-          /*
-           * We only accumulate two infinitive values!
-           */
-          return (isinf(parent.weight) ? true : false);
-        }
-        else
-        {
-          parent.weight += element.weight;
-          return true;
-        }
+         /* 
+          * We only accumulate two infinitive values!
+          */
+         return (isinf(parent.weight) ? true : false);
       }
-      return false;
+
+      parent.weight += element.weight;
+      return true;
     }
   }
 
@@ -278,14 +251,14 @@ class NeuralEntity
   #
   method :stimuli_add, {at: 'stime', weight: 'real'}, %{
     Stimulus s; s.at = at; s.weight = weight;
-    if (@simulator->stimuli_tolerance <= 0.0)
+    if (@simulator->stimuli_tolerance >= 0.0)
     {
-      @stimuli_pq.push(s);
+      if (@stimuli_pq.accumulate<real>(s, stimuli_accum, @simulator->stimuli_tolerance))
+      {
+        return;
+      }
     }
-    else
-    {
-      @stimuli_pq.push_accumulate<real>(s, stimuli_accum, @simulator->stimuli_tolerance);
-    }
+    @stimuli_pq.push(s);
     schedule(@stimuli_pq.top().at);
   }
 

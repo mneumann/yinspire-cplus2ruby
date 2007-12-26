@@ -1,13 +1,14 @@
-RUBY=${HOME}/Work/usr.opt/bin/ruby
+CC=g++
+CFLAGS=-no-integrated-cpp -B ${PWD}/tools -O3 -Winline -Wall -I${PWD}
+RUBY=${HOME}/Work/usr.current/bin/ruby
 
-build:
-	${RUBY} run.rb
+default: build
 
-run0: build
-	time ${RUBY} run.rb 0
+codegen:
+	${RUBY} yinspire.rb
 
-run1000: build
-	time ${RUBY} run.rb 1000
+build: codegen
+	${CC} ${CFLAGS} `find . -name '*.cc'` -o yinspire ${LDFLAGS}
 
-run10000: build
-	time ${RUBY} run.rb 10000
+clean:
+	rm -f yinspire
