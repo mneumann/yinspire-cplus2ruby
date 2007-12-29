@@ -7,10 +7,10 @@ Cplus2Ruby.add_type_alias 'uint'  => 'unsigned int'
 Infinity = 1.0/0.0
 
 Cplus2Ruby << %{
+  #include <assert.h>
   #include <math.h>
   #include "binary_heap.h"
   #include "memory_allocator.h"
-  #include <assert.h>
 
   #define real_exp expf
   #define real_fabs fabsf

@@ -59,7 +59,7 @@ class NeuralEntity
   # Nevertheless we put this into the base class for simplicity reasons
   # and as it's quite low overhead (12 bytes).
   #
-  property :stimuli_pq, 'BinaryHeap<Stimulus, MemoryAllocator<Stimulus>, uint>'
+  property :stimuli_pq, 'BinaryHeap<Stimulus, MemoryAllocator<Stimulus> >'
     
   #
   # If stepped scheduling is used, these two properties reference the

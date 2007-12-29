@@ -23,7 +23,7 @@ class Simulator
   #
   # Priority queue used to schedule the entities.
   #
-  property :schedule_pq, 'IndexedBinaryHeap<NeuralEntity*, MemoryAllocator<NeuralEntity*>, uint, NeuralEntity>'
+  property :schedule_pq, 'IndexedBinaryHeap<NeuralEntity*, MemoryAllocator<NeuralEntity*>, NeuralEntity>'
 
   #
   # If stepped scheduling is used, this points to the first entiy in the

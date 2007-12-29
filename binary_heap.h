@@ -8,13 +8,10 @@
 #ifndef __YINSPIRE__BINARY_HEAP__
 #define __YINSPIRE__BINARY_HEAP__
 
-#include <iostream>
-
 /*
  * An implicit Binary Heap.
  *
  *   E: Element type
- *   I: Index type name
  *   MA: Memory Allocator
  *   ACC: Accessor 
  *
@@ -26,16 +23,18 @@
  *     }
  *   }
  *
- *   BinaryHeap<int, MemoryAllocator, unsigned int, acc> heap;
+ *   BinaryHeap<int, MemoryAllocator, acc> heap;
  *   heap.push(4);
  *   heap.pop();
  *   ...
  *
  */
 
-template <class E, class MA, typename I = unsigned int, class ACC = E>
+template <class E, class MA, class ACC = E>
 class BinaryHeap
 {
+    typedef unsigned int I;
+
   public:
 
       BinaryHeap()
@@ -302,15 +301,16 @@ class BinaryHeap
  *     }
  *   }
  *
- *   IndexedBinaryHeap<E, MemoryAllocator, unsigned int, acc> heap;
+ *   IndexedBinaryHeap<E, MemoryAllocator, acc> heap;
  *   ...
  *
  */
 
-template <class E, class MA, typename I = unsigned int, class ACC = E> 
-class IndexedBinaryHeap : public BinaryHeap<E, MA, I, ACC>
+template <class E, class MA, class ACC = E> 
+class IndexedBinaryHeap : public BinaryHeap<E, MA, ACC>
 {
-    typedef BinaryHeap<E, MA, I, ACC> super; 
+    typedef unsigned int I;
+    typedef BinaryHeap<E, MA, ACC> super; 
 
   public:
 
