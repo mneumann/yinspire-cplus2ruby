@@ -356,7 +356,7 @@ class Cplus2Ruby::CodeGenerator
   def ruby_method_wrappers(out)
     @model.each_model_class do |mk|
       mk.methods.each do |meth|
-        next if meth.options[:internal]
+        next unless meth.params.all? {|_, type| can_convert_type?(type) }
 
         params = meth.params.dup
         returns = params.delete(:returns) || 'void'
@@ -499,7 +499,7 @@ class Cplus2Ruby::CodeGenerator
       mp = mk.klass.name
 
       mk.methods.each do |meth| 
-        next if meth.options[:internal]
+        next unless meth.params.all? {|_, type| can_convert_type?(type) }
         out << %{rb_define_method(klass, "#{meth.name}", } 
         out << %{(VALUE(*)(...))#{mp}_wrap__#{meth.name}, #{meth.arity});\n}
       end

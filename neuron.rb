@@ -53,7 +53,7 @@ class Neuron < NeuralEntity
     {
       iter(this, syn);
     }
-  }, virtual: true, internal: true
+  }, virtual: true
 
   # 
   # Adding a post synapse. Target must be a Synapse.

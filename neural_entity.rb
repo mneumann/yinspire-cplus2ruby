@@ -112,7 +112,7 @@ class NeuralEntity
   # Iterates over each connection. To be overwritten by subclasses!
   #
   method :each_connection, {iter: 'void (*%s)(NeuralEntity*,NeuralEntity*)'}, nil,
-    virtual: true, internal: true
+    virtual: true
 
   helper_code %{
     static void
@@ -316,20 +316,20 @@ class NeuralEntity
     }
 
     return weight;
-  }, internal: true
+  }
 
   #
   # Accessor function for BinaryHeap
   #
   method :bh_cmp_gt, {a: NeuralEntity, b: NeuralEntity, returns: 'bool'}, %{
     return (a->schedule_at > b->schedule_at);
-  }, SII
+  }, static: true, inline: true
   
   #
   # Accessor function for BinaryHeap
   #
   method :bh_index, {a: NeuralEntity, returns: 'uint&'}, %{
     return a->schedule_index;
-  }, SII
+  }, static: true, inline: true
 
 end

@@ -103,7 +103,7 @@ class Synapse < NeuralEntity
 
   method :each_connection, {iter: 'void (*%s)(NeuralEntity*,NeuralEntity*)'}, %{
     iter(this, @post_neuron);
-  }, virtual: true, internal: true
+  }, virtual: true
 
   def load(data)
     super

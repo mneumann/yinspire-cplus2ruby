@@ -6,8 +6,6 @@ Cplus2Ruby.add_type_alias 'uint'  => 'unsigned int'
 
 Infinity = 1.0/0.0
 
-SII = {static: true, inline: true, internal: true}
-
 Cplus2Ruby << %{
   #include <math.h>
   #include "binary_heap.h"
