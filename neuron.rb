@@ -17,25 +17,25 @@ class Neuron < NeuralEntity
   #
   # Last spike time
   #
-  property :last_spike_time, 'simtime', default: '%s = -INFINITY'
+  property :last_spike_time, 'simtime', init: -Infinity
   
   #
   # Last fire time
   #
-  property :last_fire_time, 'simtime', default: '%s = -INFINITY'
+  property :last_fire_time, 'simtime', init: -Infinity
 
   #
   # Whether this neuron is a hebb neuron or not.  A hebb neuron also
   # stimulates it's pre synapses upon firing.
   #
-  property :hebb, 'bool', default: '%s = false'
+  property :hebb, 'bool', init: false
 
 
   def load(data)
     super
     self.abs_refr_duration = data['abs_refr_duration'] || 0.0
-    self.last_spike_time = data['last_spike_time'] || -INFINITY
-    self.last_fire_time = data['last_fire_time'] || -INFINITY
+    self.last_spike_time = data['last_spike_time'] || -Infinity
+    self.last_fire_time = data['last_fire_time'] || -Infinity
     self.hebb = data['hebb'] || false
   end
 

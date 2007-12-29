@@ -4,7 +4,7 @@ Cplus2Ruby.add_type_alias 'real'  => 'float'
 Cplus2Ruby.add_type_alias 'simtime' => 'float'
 Cplus2Ruby.add_type_alias 'uint'  => 'unsigned int'
 
-INFINITY = 1.0/0.0
+Infinity = 1.0/0.0
 
 SII = {static: true, inline: true, internal: true}
 
@@ -19,6 +19,8 @@ Cplus2Ruby << %{
 
   #define MIN(a,b) ((a) < (b) ? (a) : (b))
   #define MAX(a,b) ((a) > (b) ? (a) : (b))
+  
+  #define Infinity INFINITY
 }
 
 class Simulator; include Cplus2Ruby end

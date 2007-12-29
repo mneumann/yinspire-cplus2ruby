@@ -7,18 +7,18 @@ class Simulator
   #
   # The time step used for stepped scheduling.
   #
-  property :schedule_step, 'simtime', default: '%s = INFINITY'
+  property :schedule_step, 'simtime', init: Infinity
 
   #
   # The time of the next step.
   #
-  property :schedule_next_step, 'simtime', default: '%s = INFINITY'
+  property :schedule_next_step, 'simtime', init: Infinity
 
   #
   # The tolerance (time difference) up to which local stimuli are
   # accumulated.
   #
-  property :stimuli_tolerance, 'simtime', default: '%s = -INFINITY'
+  property :stimuli_tolerance, 'simtime', init: Infinity
 
   #
   # Priority queue used to schedule the entities.
@@ -146,7 +146,7 @@ class Simulator
     events.each do |id, time_series|
       entity = @entities[id]
       time_series.each do |at|
-        entity.stimulate(at, INFINITY, nil)
+        entity.stimulate(at, Infinity, nil)
       end
     end
   end
@@ -200,7 +200,7 @@ class Simulator
     events.each do |id, time_series|
       entity = @entities[id] || raise
       time_series.each do |at|
-        entity.stimulate(at, INFINITY, nil)
+        entity.stimulate(at, Infinity, nil)
       end
     end
   end

@@ -168,19 +168,29 @@ class Cplus2Ruby::Model
     end
   end
 
+  def lookup_type_entry(attribute, first, type)
+    val = first[attribute]
+    if val.nil? 
+      if x = get_type_entry(type)
+        val = x[attribute] 
+      end
+    end
+    return val
+  end
+
   def get_type_entry(type)
-    @type_map[type] || {}
+    @type_map[type] || nil 
   end
 
   protected
 
   def object_type_map(type)
     {
-      default: '%s = NULL',
-      mark:    'if (%s) rb_gc_mark(%s->__obj__)',
-      ruby2c:  "(NIL_P(%s) ? NULL : (#{type}*)DATA_PTR(%s))",
-      c2ruby:  '(%s ? %s->__obj__ : Qnil)', 
-      ctype:   "#{type} *%s",
+      init:   'NULL',
+      mark:   'if (%s) rb_gc_mark(%s->__obj__)',
+      ruby2c: "(NIL_P(%s) ? NULL : (#{type}*)DATA_PTR(%s))",
+      c2ruby: '(%s ? %s->__obj__ : Qnil)', 
+      ctype:  "#{type} *%s",
       ruby2c_checktype: 'if (!NIL_P(%s)) Check_Type(%s, T_DATA)'
     }
   end
@@ -188,41 +198,41 @@ class Cplus2Ruby::Model
   def get_type_map
     { 
       'VALUE' => {
-        default: '%s = Qnil',
-        mark:    'rb_gc_mark(%s)',
-        ruby2c:  '%s',
-        c2ruby:  '%s',
-        ctype:   'VALUE %s' 
+        init:   'Qnil',
+        mark:   'rb_gc_mark(%s)',
+        ruby2c: '%s',
+        c2ruby: '%s',
+        ctype:  'VALUE %s' 
       },
       'float' => {
-        default: '%s = 0.0',
-        ruby2c:  '(float)NUM2DBL(%s)',
-        c2ruby:  'rb_float_new((double)%s)',
-        ctype:   'float %s'
+        init:   0.0,
+        ruby2c: '(float)NUM2DBL(%s)',
+        c2ruby: 'rb_float_new((double)%s)',
+        ctype:  'float %s'
       },
       'double' => {
-        default: '%s = 0.0',
-        ruby2c:  '(double)NUM2DBL(%s)',
-        c2ruby:  'rb_float_new(%s)',
-        ctype:   'double %s'
+        init:   0.0,
+        ruby2c: '(double)NUM2DBL(%s)',
+        c2ruby: 'rb_float_new(%s)',
+        ctype:  'double %s'
       },
       'int' => {
-        default: '%s = 0',
-        ruby2c:  '(int)NUM2INT(%s)',
-        c2ruby:  'INT2NUM(%s)',
-        ctype:   'int %s'
+        init:   0,
+        ruby2c: '(int)NUM2INT(%s)',
+        c2ruby: 'INT2NUM(%s)',
+        ctype:  'int %s'
       },
       'unsigned int' => {
-        default: '%s = 0',
-        ruby2c:  '(unsigned int)NUM2INT(%s)',
-        c2ruby:  'INT2NUM(%s)',
-        ctype:   'unsigned int %s'
+        init:   0,
+        ruby2c: '(unsigned int)NUM2INT(%s)',
+        c2ruby: 'INT2NUM(%s)',
+        ctype:  'unsigned int %s'
       },
       'bool' => { 
-        default: '%s = false',
-        ruby2c:  '(RTEST(%s) ? true : false)',
-        c2ruby:  '(%s ? Qtrue : Qfalse)',
-        ctype:   'bool %s'
+        init:   false,
+        ruby2c: '(RTEST(%s) ? true : false)',
+        c2ruby: '(%s ? Qtrue : Qfalse)',
+        ctype:  'bool %s'
       },
       'void' => {
         c2ruby:  'Qnil',
@@ -397,7 +407,7 @@ class Cplus2Ruby::CodeGenerator
     out << "void #{model_class.klass.name}::__mark__() {\n"
 
     model_class.properties.each do |prop|
-      if mark = prop.options[:mark] || @model.get_type_entry(prop.type)[:mark]
+      if mark = @model.lookup_type_entry(:mark, prop.options, prop.type) 
         out << mark.gsub('%s', "@#{prop.name}")
         out << ";\n"
       end
@@ -411,7 +421,7 @@ class Cplus2Ruby::CodeGenerator
   def ruby_property_wrappers(out)
     @model.each_model_class do |mk|
       mk.properties.each do |prop|
-        next if prop.options[:internal]
+        next unless can_convert_type?(prop.type)  
 
         ## getter
         out << "static VALUE\n"
@@ -467,7 +477,7 @@ class Cplus2Ruby::CodeGenerator
     out << "void #{model_class.klass.name}::__free__() {\n"
 
     model_class.properties.each do |prop|
-      if free = prop.options[:free] || @model.get_type_entry(prop.type)[:free]
+      if free = @model.lookup_type_entry(:free, prop.options, prop.type)
         out << mark.gsub('%s', "@#{prop.name}")
         out << ";\n"
       end
@@ -495,7 +505,7 @@ class Cplus2Ruby::CodeGenerator
       end
 
       mk.properties.each do |prop|
-        next if prop.options[:internal]
+        next unless can_convert_type?(prop.type)  
 
         # getter
         out << %{rb_define_method(klass, "#{prop.name}", } 
@@ -508,6 +518,13 @@ class Cplus2Ruby::CodeGenerator
     end
 
     out << "}\n"
+  end
+
+  # 
+  # Return true if Ruby <-> C conversion for this type is possible
+  #
+  def can_convert_type?(type)
+    @model.get_type_entry(type) ? true : false
   end
 
   def check_type(name, type, out)
@@ -599,10 +616,12 @@ class Cplus2Ruby::CodeGenerator
     out << "#{n}::#{n}() {\n"
 
     model_class.properties.each do |prop|
-      next if prop.options[:internal] # FIXME???
-
-      if dflt = prop.options[:default] || @model.get_type_entry(prop.type)[:default]
-        out << dflt.gsub('%s', "@#{prop.name}")
+      if init = @model.lookup_type_entry(:init, prop.options, prop.type)
+        if init.is_a?(String) and init.include?("%s")
+          out << init.gsub('%s', "@#{prop.name}")
+        else
+          out << "@#{prop.name} = #{init}"
+        end
         out << ";\n"
       end
     end

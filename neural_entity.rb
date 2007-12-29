@@ -50,7 +50,7 @@ class NeuralEntity
   # If the entity has events in the future, this is the timestamp of the
   # next event.
   #
-  property :schedule_at, 'simtime', default: '%s = INFINITY'
+  property :schedule_at, 'simtime', init: Infinity
 
   #
   # Each NeuralEntity has it's own local stimuli priority queue.
@@ -59,8 +59,7 @@ class NeuralEntity
   # Nevertheless we put this into the base class for simplicity reasons
   # and as it's quite low overhead (12 bytes).
   #
-  property :stimuli_pq, 'BinaryHeap<Stimulus, MemoryAllocator<Stimulus>, uint>',
-    internal: true
+  property :stimuli_pq, 'BinaryHeap<Stimulus, MemoryAllocator<Stimulus>, uint>'
     
   #
   # If stepped scheduling is used, these two properties reference the
