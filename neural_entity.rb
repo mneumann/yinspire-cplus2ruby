@@ -81,6 +81,8 @@ class NeuralEntity
   #
   property :stimuli_pq, 'BinaryHeap<Stimulus, MemoryAllocator<Stimulus>, uint>', internal: true
 
+  property :dummy, 'char %s[sizeof(unsigned int)+sizeof(short)]', internal: true
+
   # 
   # Dump the internal state of a NeuralEntity and return it. Internal
   # state does not contain the net connections which have to be dumped

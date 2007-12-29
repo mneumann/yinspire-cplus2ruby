@@ -41,10 +41,8 @@ class BinaryHeap
       BinaryHeap()
       {
         @capacity = 0;
-        //@real_capacity = 
         @size = 0;
         @elements = NULL; // we do lazy allocation!
-        @resize_factor = 0;
       }
 
       ~BinaryHeap()
@@ -228,13 +226,7 @@ class BinaryHeap
     inline void
       resize()
       {
-        // bit shifted capacity.
-     
-        //I new_capacity = @capacity+1;
-
-        //@capacity *=
         resize(2*@capacity+1);
-        //@resize_factor *= 2;
       }
 
     void
@@ -243,21 +235,12 @@ class BinaryHeap
         if (new_capacity < 1023) new_capacity = 1023;  // minimum capacity!
         @capacity = new_capacity; 
 
-        //std::cout << "rf: " << @resize_factor << "  ";
-        //std::cout << "nc: " << new_capacity << std::endl; 
-
-        //resize_factor++;
-
         /* 
          * We do lazy allocation!
          */
         if (@elements != NULL)
         {
-          E *new_elements = MA::alloc_n(@capacity+1);
-          memcpy(new_elements, elements, sizeof(E)*@size-1);
-          MA::free(@elements);
-          @elements = new_elements;
-          //@elements = MA::realloc_n(@elements, @capacity+1);
+          @elements = MA::realloc_n(@elements, @capacity+1);
         }
         else
         {
@@ -285,12 +268,9 @@ class BinaryHeap
 
   protected:
 
-    I  real_capacity;
-    I  capacity;
     I  size;
     E* elements;
-    short resize_factor;
-
+    I  capacity;
 };
 
 /*
