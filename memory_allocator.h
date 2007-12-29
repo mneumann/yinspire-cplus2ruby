@@ -1,6 +1,7 @@
 #ifndef __YINSPIRE__MEMORY_ALLOCATOR__
 #define __YINSPIRE__MEMORY_ALLOCATOR__
 
+#include "ruby.h"
 #include <stdlib.h>
 
 /*
@@ -15,23 +16,14 @@ class MemoryAllocator
     inline static T*
       alloc_n(size_t n)
       {
-        T* ptr = (T*) calloc(n, sizeof(T));
-        if (ptr == NULL)
-        {
-          throw "memory allocation failed";
-        }
-        return ptr;
+        return ALLOC_N(T, n);
       }
 
     inline static T*
       realloc_n(T* old_ptr, size_t n)
       {
-        T* ptr = (T*) realloc(old_ptr, sizeof(T)*n);
-        if (ptr == NULL)
-        {
-          throw "memory allocation failed";
-        }
-        return ptr;
+        REALLOC_N(old_ptr, T, n);
+        return old_ptr;
       }
 
     inline static void
