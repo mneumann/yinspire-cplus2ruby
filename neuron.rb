@@ -47,75 +47,68 @@ class Neuron < NeuralEntity
     into['hebb'] = self.hebb
   end
 
-  method :each_connection, {iter: 'void (*%s)(NeuralEntity*,NeuralEntity*)'}, %{
-    for (Synapse *syn = @first_post_synapse; syn != NULL;
-        syn = syn->next_post_synapse)
-    {
-      iter(this, syn);
-    }
-  }, virtual: true
-
   # 
   # Adding a post synapse. Target must be a Synapse.
   #
   # O(1)
   #
-  method :connect, {target: NeuralEntity}, %{
-    Synapse *syn = dynamic_cast<Synapse*>(target);
+  def connect(target)
+    raise "target must be Synapse" unless target.kind_of?(Synapse)
+    raise "Synapse already connected" if target.pre_neuron || target.next_post_synapse
 
-    if (syn->pre_neuron != NULL || syn->next_post_synapse != NULL)
-      throw "Synapse already connected";
-
-    syn->next_post_synapse = @first_post_synapse;
-    @first_post_synapse = syn;
-    syn->pre_neuron = this;
-  }, virtual: true
+    target.next_post_synapse = self.first_post_synapse
+    self.first_post_synapse = target
+    target.pre_neuron = self
+  end
 
   #
   # O(n)
   #
-  method :disconnect, {target: NeuralEntity}, %{
-    Synapse *syn = dynamic_cast<Synapse*>(target);
+  def disconnect(target)
+    raise "target must be Synapse" unless target.kind_of?(Synapse)
+    raise "Synapse not connected to this Neuron" if target.pre_neuron != self 
 
-    if (syn->pre_neuron != this)
-      throw "Synapse not connected to this Neuron";
+    #
+    # Find the synapse in the linked list that precedes +target+.
+    #
+    prev = nil
+    curr = self.first_post_synapse
 
-    /*
-     * Find the synapse in the linked list that precedes +syn+.
-     */
-    Synapse *prev = NULL;
-    Synapse *curr = @first_post_synapse;
+    while true
+      break if curr == target
+      break unless curr
+      prev = curr
+      curr = curr.next_post_synapse
+    end
 
-    while (true)
-    {
-      if (curr == NULL) break;
-      if (curr == syn) break; 
-      prev = curr;
-      curr = curr->next_post_synapse;
-    }
+    raise "Synapse not in post synapse list" if curr != target
 
-    if (curr != syn)
-      throw "Synapse not in post synapse list";
-
-    /*
-     * Remove syn from linked list
-     */
-    if (prev == NULL)
-    {
-      /*
-       * syn is the last synapse in the post synapse list.
-       */
-      assert(@first_post_synapse == syn);
-      @first_post_synapse = NULL; 
-    }
+    #
+    # Remove +target+ from linked list.
+    #
+    if prev
+      prev.next_post_synapse = target.next_post_synapse
     else
-    {
-      prev->next_post_synapse = syn->next_post_synapse;
-    }
+      #
+      # target is the last synapse in the post synapse list.
+      #
+      raise "assert" unless self.first_post_synapse == target
+      self.first_post_synapse = nil
+    end
 
-    syn->pre_neuron = NULL;
-    syn->next_post_synapse = NULL;
-  }, virtual: true
+    target.pre_neuron = nil
+    target.next_post_synapse = nil
+  end
+
+  def each_connection
+    syn = self.first_post_synapse
+    while syn
+      yield syn
+      syn = syn.next_post_synapse
+    end
+  end
+
+  protected
 
   #
   # NOTE: The stimulation weight is 0.0 below as the synapse will add
@@ -136,4 +129,5 @@ class Neuron < NeuralEntity
       syn->stimulate(at, 0.0, this);
     }
   }
+
 end

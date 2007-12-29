@@ -81,6 +81,28 @@ class NeuralEntity
   #
   property :schedule_stepping_list_internal_next, NeuralEntity
 
+  #
+  # Helper code for method +stimuli_pq_to_a+.
+  #
+  helper_code %{
+    static void
+    dump_stimuli(Stimulus& s, VALUE ary)
+    {
+      rb_ary_push(ary, rb_float_new(s.at));
+      rb_ary_push(ary, rb_float_new(s.weight));
+    }
+  }
+
+  #
+  # Returns a Ruby array in the form [at1, weight1, at2, weight2] 
+  # for +stimuli_pq+.
+  #
+  method :stimuli_pq_to_a, {returns: Object}, %{
+    VALUE ary = rb_ary_new(); 
+    @stimuli_pq.each<VALUE>(dump_stimuli, ary);
+    return ary;
+  }
+
   # 
   # Dump the internal state of a NeuralEntity and return it. Internal
   # state does not contain the net connections which have to be dumped
@@ -101,33 +123,30 @@ class NeuralEntity
   #
   # Connect +self+ with +target+.
   #
-  method :connect, {target: NeuralEntity}, nil, virtual: true
+  def connect(target)
+    raise "abstract method"
+  end
 
   #
   # Disconnect +self+ from all connections.
   #
-  method :disconnect, {target: NeuralEntity}, nil, virtual: true
+  def disconnect(target)
+    raise "abstract method"
+  end
+  
+  #
+  # Disconnect +self+ from all connections.
+  #
+  def disconnect_all
+    each_connection {|conn| disconnect(conn) }
+  end
 
   #
   # Iterates over each connection. To be overwritten by subclasses!
   #
-  method :each_connection, {iter: 'void (*%s)(NeuralEntity*,NeuralEntity*)'}, nil,
-    virtual: true
-
-  helper_code %{
-    static void
-    iter_disconnect(NeuralEntity *self, NeuralEntity *conn)
-    {
-      self->disconnect(conn);
-    }
-  }
-
-  #
-  # Disconnect +self+ from all connections.
-  #
-  method :disconnect_all, {}, %{
-    each_connection(iter_disconnect);
-  }
+  def each_connection
+    raise "abstract method"
+  end
 
   #
   # Stimulate an entity +at+ a specific time with a specific +weight+
