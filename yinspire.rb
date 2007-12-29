@@ -13,7 +13,6 @@ Cplus2Ruby << %{
   #include "binary_heap.h"
   #include "memory_allocator.h"
   #include <assert.h>
-  #include "ruby.h"
 
   #define real_exp expf
   #define real_fabs fabsf

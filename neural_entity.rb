@@ -53,6 +53,16 @@ class NeuralEntity
   property :schedule_at, 'simtime', default: '%s = INFINITY'
 
   #
+  # Each NeuralEntity has it's own local stimuli priority queue.
+  # Neurons make use of this whereas Synapses do not.
+  #
+  # Nevertheless we put this into the base class for simplicity reasons
+  # and as it's quite low overhead (12 bytes).
+  #
+  property :stimuli_pq, 'BinaryHeap<Stimulus, MemoryAllocator<Stimulus>, uint>',
+    internal: true
+    
+  #
   # If stepped scheduling is used, these two properties reference the
   # previous/next entity in the stepped-scheduling list.
   #
@@ -71,17 +81,6 @@ class NeuralEntity
   # This is only used by the simulator!
   #
   property :schedule_stepping_list_internal_next, NeuralEntity
-
-  #
-  # Each NeuralEntity has it's own local stimuli priority queue.
-  # Neurons make use of this whereas Synapses do not.
-  #
-  # Nevertheless we put this into the base class for simplicity reasons
-  # and as it's quite low overhead (12 bytes).
-  #
-  property :stimuli_pq, 'BinaryHeap<Stimulus, MemoryAllocator<Stimulus>, uint>', internal: true
-
-  property :dummy, 'char %s[sizeof(unsigned int)+sizeof(short)]', internal: true
 
   # 
   # Dump the internal state of a NeuralEntity and return it. Internal

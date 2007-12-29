@@ -293,9 +293,9 @@ class Cplus2Ruby::CodeGenerator
     # mod_name.h
     #
     File.open(mod_name + ".h", 'w+') do |out| 
-      out << @model.code
       header(out)
       type_aliases(out)
+      out << @model.code
 
       forward_class_declarations(out)
       helper_headers(out)
@@ -659,10 +659,8 @@ class Cplus2Ruby::CodeGenerator
 
   def header(out)
     out << <<EOS
-/*#ifndef NULL
-#define NULL 0L
-#endif */
-//#include "ruby.h"
+#include <stdlib.h>
+#include "ruby.h"
 struct RubyObject {
 
   VALUE __obj__;
@@ -671,10 +669,10 @@ struct RubyObject {
     __obj__ = Qnil;
   }
 
-  /*void *operator new (size_t num_bytes)
+  void *operator new (size_t num_bytes)
   {
-    return malloc(num_bytes + sizeof(VALUE));
-  }*/
+    return malloc(num_bytes + 12);
+  }
 
   virtual ~RubyObject() {};
 
@@ -686,7 +684,7 @@ struct RubyObject {
     ((RubyObject*)ptr)->__mark__();
   }
 
-  virtual void __free__() { /*delete this;*/ }
+  virtual void __free__() { free(this); }
   virtual void __mark__() { }
 };
 EOS
