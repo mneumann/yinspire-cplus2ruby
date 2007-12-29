@@ -10,7 +10,7 @@ class NeuralEntity
   helper_header %{
     struct Stimulus
     {
-      stime at;
+      simtime at;
       real  weight;
 
       inline static bool
@@ -27,7 +27,9 @@ class NeuralEntity
   # Simulator (during loading or constructing a neural net) and SHOULD
   # NOT be changed afterwards (because it's used as a key in a Hash).
   #
-  property :id, 'std::string'
+  property :id, 'std::string', internal: true
+
+  property :iid
 
   #
   # Each NeuralEntity has a reference back to the Simulator. This is
@@ -50,7 +52,7 @@ class NeuralEntity
   # If the entity has events in the future, this is the timestamp of the
   # next event.
   #
-  property :schedule_at, 'stime', default: '%s = INFINITY'
+  property :schedule_at, 'simtime', default: '%s = INFINITY'
 
   #
   # If stepped scheduling is used, these two properties reference the
@@ -79,14 +81,14 @@ class NeuralEntity
   # Nevertheless we put this into the base class for simplicity reasons
   # and as it's quite low overhead (12 bytes).
   #
-  property :stimuli_pq, 'BinaryHeap<Stimulus, MemoryAllocator<Stimulus>, uint>', :internal => true
+  property :stimuli_pq, 'BinaryHeap<Stimulus, MemoryAllocator<Stimulus>, uint>', internal: true
 
   # 
   # Dump the internal state of a NeuralEntity and return it. Internal
   # state does not contain the net connections which have to be dumped
   # separatly by the Simulator using +each_connection+.
   #
-  method :dump, {into: 'jsonHash*'}, nil, virtual: true
+  method :dump, {into: 'jsonHash*'}, nil, virtual: true, internal: true
 
   #
   # Load the internal state of a NeuralEntity from +data+. Note that
@@ -94,7 +96,7 @@ class NeuralEntity
   # loading, which means that you have to take care that the
   # NeuralEntity is not put in an inconsistent state!
   #
-  method :load, {data: 'jsonHash*'}, nil, virtual: true
+  method :load, {data: 'jsonHash*'}, nil, virtual: true, internal: true
 
   #
   # Connect +self+ with +target+.
@@ -110,7 +112,7 @@ class NeuralEntity
   # Iterates over each connection. To be overwritten by subclasses!
   #
   method :each_connection, {iter: 'void (*%s)(NeuralEntity*,NeuralEntity*)'}, nil,
-    virtual: true
+    virtual: true, internal: true
 
   helper_code %{
     static void
@@ -135,7 +137,7 @@ class NeuralEntity
   #
   # Overwrite!
   #
-  method :stimulate, {at: 'stime', weight: 'real', source: NeuralEntity}, %{
+  method :stimulate, {at: 'simtime', weight: 'real', source: NeuralEntity}, %{
     stimuli_add(at, weight);
   }, virtual: true
 
@@ -145,7 +147,7 @@ class NeuralEntity
   #
   # Overwrite if you need this behaviour!
   #
-  method :process, {at: 'stime'}, nil, virtual: true
+  method :process, {at: 'simtime'}, nil, virtual: true
 
   #
   # This method is called in each time-step, if and only if a
@@ -153,14 +155,14 @@ class NeuralEntity
   #
   # Overwrite if you need this behaviour!
   #
-  method :process_stepped, {at: 'stime', step: 'stime'}, nil, virtual: true
+  method :process_stepped, {at: 'simtime', step: 'simtime'}, nil, virtual: true
 
   protected
 
   #
   # Schedule the entity at a specific time.
   #
-  method :schedule, {at: 'stime'}, %{
+  method :schedule, {at: 'simtime'}, %{
     // FIXME: make sure that @schedule_at is 
     // reset when entity is removed from pq!
     if (@schedule_at != at)
@@ -249,7 +251,7 @@ class NeuralEntity
   # 
   # Add a Stimuli to the local priority queue.
   #
-  method :stimuli_add, {at: 'stime', weight: 'real'}, %{
+  method :stimuli_add, {at: 'simtime', weight: 'real'}, %{
     Stimulus s; s.at = at; s.weight = weight;
     if (@simulator->stimuli_tolerance >= 0.0)
     {
@@ -265,7 +267,7 @@ class NeuralEntity
   # 
   # Consume all Stimuli until +till+ and return the sum of the weights.
   #
-  method :stimuli_sum, {till: 'stime', returns: 'real'}, %{
+  method :stimuli_sum, {till: 'simtime', returns: 'real'}, %{
     real weight = 0.0;
 
     while (!@stimuli_pq.empty() && @stimuli_pq.top().at <= till)
@@ -291,7 +293,7 @@ class NeuralEntity
   # This treats infinitive values specially and instead of summing them,
   # it sets +is_inf+ to +true+.
   #
-  method :stimuli_sum_inf, {till: 'stime', is_inf: 'bool&', returns: 'real'}, %{
+  method :stimuli_sum_inf, {till: 'simtime', is_inf: 'bool&', returns: 'real'}, %{
     real weight = 0.0;
     is_inf = false;
 

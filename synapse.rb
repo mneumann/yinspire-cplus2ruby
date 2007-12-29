@@ -8,7 +8,7 @@ class Synapse
   # 
   # The propagation delay of a Synapse.
   #
-  property :delay, 'stime'
+  property :delay, 'simtime'
 
   #
   # The pre and post Neurons of the Synapse.
@@ -32,7 +32,7 @@ class Synapse
   # 
   # We ignore the weight parameter that is passed by the Neuron.
   #
-  method :stimulate, {at: 'stime', weight: 'real', source: NeuralEntity}, %{
+  method :stimulate, {at: 'simtime', weight: 'real', source: NeuralEntity}, %{
     if (source != @post_neuron)
     {
       @post_neuron->stimulate(at + @delay, @weight, this);
@@ -103,11 +103,11 @@ class Synapse
 
   method :each_connection, {iter: 'void (*%s)(NeuralEntity*,NeuralEntity*)'}, %{
     iter(this, @post_neuron);
-  }, virtual: true
+  }, virtual: true, internal: true
 
   method :load, {data: 'jsonHash*'}, %{
     super::load(data);
     @weight = data->get_number("weight", 0.0);
     @delay = data->get_number("delay", 0.0);
-  }, virtual: true
+  }, virtual: true, internal: true
 end

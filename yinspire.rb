@@ -1,7 +1,7 @@
 require 'tools/cplus2ruby'
 
 Cplus2Ruby.add_type_alias 'real'  => 'float'
-Cplus2Ruby.add_type_alias 'stime' => 'float'
+Cplus2Ruby.add_type_alias 'simtime' => 'float'
 Cplus2Ruby.add_type_alias 'uint'  => 'unsigned int'
 
 INFINITY = 1.0/0.0
@@ -17,6 +17,7 @@ Cplus2Ruby << %{
   #include "hash.h"
   #include "json/json.h"
   #include "json/json_parser.h"
+  #include "ruby.h"
 
   #define real_exp expf
   #define real_fabs fabsf
@@ -38,14 +39,11 @@ require 'neuron'
 require 'synapse'
 require 'neuron_srm_01'
 
-Cplus2Ruby.generate_code('yinspire')
-
-=begin
 begin
   require './work/yinspire.so'
 rescue LoadError
   Cplus2Ruby.compile_and_load('work/yinspire', 
-    "-no-integrated-cpp -B ${PWD}/tools -O3 -fomit-frame-pointer -Winline -Wall -I#{Dir.pwd} -I${PWD}", "")
+    "-no-integrated-cpp -B #{Dir.pwd}/tools -O3 -fomit-frame-pointer -Winline -Wall -I#{Dir.pwd} -I${PWD}", 
+    "#{Dir.pwd}/*.o")
   retry
 end
-=end

@@ -50,7 +50,7 @@ struct jsonHashItem
 
 jsonValue::jsonValue() 
 {
-  @ref_count = 0;
+  @ref_count = 1;
 }
 
 jsonValue::~jsonValue()

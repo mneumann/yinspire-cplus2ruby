@@ -8,6 +8,8 @@
 #ifndef __YINSPIRE__BINARY_HEAP__
 #define __YINSPIRE__BINARY_HEAP__
 
+#include <iostream>
+
 /*
  * An implicit Binary Heap.
  *
@@ -39,8 +41,10 @@ class BinaryHeap
       BinaryHeap()
       {
         @capacity = 0;
+        //@real_capacity = 
         @size = 0;
         @elements = NULL; // we do lazy allocation!
+        @resize_factor = 0;
       }
 
       ~BinaryHeap()
@@ -55,7 +59,7 @@ class BinaryHeap
         @size += 1;
         if (@size > @capacity)
         {
-          resize(2*@capacity + 1);
+          resize();
         }
         @elements[@size] = element;
         update_index(@size);
@@ -221,18 +225,39 @@ class BinaryHeap
         }
       }
 
+    inline void
+      resize()
+      {
+        // bit shifted capacity.
+     
+        //I new_capacity = @capacity+1;
+
+        //@capacity *=
+        resize(2*@capacity+1);
+        //@resize_factor *= 2;
+      }
+
     void
       resize(I new_capacity)
       {
-        if (new_capacity < 7) new_capacity = 7;  // minimum capacity!
+        if (new_capacity < 1023) new_capacity = 1023;  // minimum capacity!
         @capacity = new_capacity; 
+
+        //std::cout << "rf: " << @resize_factor << "  ";
+        //std::cout << "nc: " << new_capacity << std::endl; 
+
+        //resize_factor++;
 
         /* 
          * We do lazy allocation!
          */
         if (@elements != NULL)
         {
-          @elements = MA::realloc_n(@elements, @capacity+1);
+          E *new_elements = MA::alloc_n(@capacity+1);
+          memcpy(new_elements, elements, sizeof(E)*@size-1);
+          MA::free(@elements);
+          @elements = new_elements;
+          //@elements = MA::realloc_n(@elements, @capacity+1);
         }
         else
         {
@@ -260,9 +285,11 @@ class BinaryHeap
 
   protected:
 
+    I  real_capacity;
     I  capacity;
     I  size;
     E* elements;
+    short resize_factor;
 
 };
 

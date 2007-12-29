@@ -72,11 +72,14 @@ def to_new2(new)
   new2['templates'] = new['templates']
   entities = new2['entities'] = [] 
   connections = new2['connections'] = []
-  new['entities'].each do |id, v|
+  new['entities'].keys.sort.each do |id|
+    v = new['entities'][id]
     entities << [id, v].flatten
   end
 
-  new['connections'].each do |from, to|
+  new['connections'].keys.sort.each do |from|
+    to = new['connections'][from]
+    #|from, to|
     connections << [from, to].flatten
   end
 

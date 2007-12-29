@@ -12,17 +12,17 @@ class Neuron
   #
   # Duration of the absolute refraction period.
   #
-  property :abs_refr_duration, 'stime'
+  property :abs_refr_duration, 'simtime'
 
   #
   # Last spike time
   #
-  property :last_spike_time, 'stime', default: '%s = -INFINITY'
+  property :last_spike_time, 'simtime', default: '%s = -INFINITY'
   
   #
   # Last fire time
   #
-  property :last_fire_time, 'stime', default: '%s = -INFINITY'
+  property :last_fire_time, 'simtime', default: '%s = -INFINITY'
 
   #
   # Whether this neuron is a hebb neuron or not.  A hebb neuron also
@@ -36,7 +36,7 @@ class Neuron
     @last_spike_time = data->get_number("last_spike_time", -INFINITY);
     @last_fire_time = data->get_number("last_fire_time", -INFINITY);
     @hebb = data->get_bool("hebb", false);
-  }
+  }, internal: true
 
   method :each_connection, {iter: 'void (*%s)(NeuralEntity*,NeuralEntity*)'}, %{
     for (Synapse *syn = @first_post_synapse; syn != NULL;
@@ -44,7 +44,7 @@ class Neuron
     {
       iter(this, syn);
     }
-  }, virtual: true
+  }, virtual: true, internal: true
 
   # 
   # Adding a post synapse. Target must be a Synapse.
@@ -112,7 +112,7 @@ class Neuron
   # NOTE: The stimulation weight is 0.0 below as the synapse will add
   # it's weight to the preceding neurons.
   #
-  method :fire_synapses, {at: 'stime'}, %{
+  method :fire_synapses, {at: 'simtime'}, %{
     if (@hebb) 
     {
       for (Synapse *syn = @first_pre_synapse; syn != NULL;

@@ -84,6 +84,11 @@ module Cplus2Ruby
     require 'win32/process' if RUBY_PLATFORM.match('mswin')
     require 'fileutils'
 
+    RbConfig::MAKEFILE_CONFIG['COMPILE_C'] = 
+      '$(CC) $(INCFLAGS) $(CPPFLAGS) $(CFLAGS) -c $<'
+    RbConfig::MAKEFILE_CONFIG['COMPILE_CXX'] = 
+      '$(CXX) $(INCFLAGS) $(CPPFLAGS) $(CXXFLAGS) -c $<'
+
     base = File.basename(file)
     dir = File.dirname(file)
     mod, ext = base.split(".") 
@@ -125,7 +130,7 @@ class Cplus2Ruby::Model
     @type_map = get_type_map()
     @code = ""
 
-    #add_type_alias Object => 'VALUE'
+    add_type_alias Object => 'VALUE'
   end
 
   def add_type_alias(h)
@@ -176,7 +181,7 @@ class Cplus2Ruby::Model
       ruby2c:  "(NIL_P(%s) ? NULL : (#{type}*)DATA_PTR(%s))",
       c2ruby:  '(%s ? %s->__obj__ : Qnil)', 
       ctype:   "#{type} *%s",
-      ruby2c_checktype: 'if(!NIL_P(%s)) Check_Type(%s, T_DATA)'
+      ruby2c_checktype: 'if (!NIL_P(%s)) Check_Type(%s, T_DATA)'
     }
   end
 
@@ -192,7 +197,7 @@ class Cplus2Ruby::Model
       'float' => {
         default: '%s = 0.0',
         ruby2c:  '(float)NUM2DBL(%s)',
-        c2ruby:  'rb_float_new(%s)',
+        c2ruby:  'rb_float_new((double)%s)',
         ctype:   'float %s'
       },
       'double' => {
@@ -215,7 +220,7 @@ class Cplus2Ruby::Model
       },
       'bool' => { 
         default: '%s = false',
-        ruby2c:  'RTEST(%s)',
+        ruby2c:  '(RTEST(%s) ? true : false)',
         c2ruby:  '(%s ? Qtrue : Qfalse)',
         ctype:   'bool %s'
       },
@@ -288,10 +293,9 @@ class Cplus2Ruby::CodeGenerator
     # mod_name.h
     #
     File.open(mod_name + ".h", 'w+') do |out| 
+      out << @model.code
       header(out)
       type_aliases(out)
-
-      out << @model.code
 
       forward_class_declarations(out)
       helper_headers(out)
@@ -309,7 +313,6 @@ class Cplus2Ruby::CodeGenerator
     #
     # mod_name_wrap.cc
     #
-=begin
     File.open(mod_name + "_wrap.cc", 'w+') do |out| 
       out << %{#include "#{mod_name}.h"\n\n}
 
@@ -319,24 +322,23 @@ class Cplus2Ruby::CodeGenerator
       ruby_alloc(out)
       ruby_init(mod_name, out)
     end
-=end
   end
 
   def ruby_alloc(out)
     @model.each_model_class do |mk|
       out << "static VALUE\n"
-      out << "#{mk.klass.name}_alloc__(VALUE __klass__)\n"
+      out << "#{mk.klass.name}_alloc__(VALUE klass)\n"
       out << "{\n"
 
       # Declare C++ object
-      out << @model.type_encode(mk.klass, "__cobj__")
+      out << @model.type_encode(mk.klass, "cobj")
       out << ";\n"
 
-      out << "__cobj__ = new #{mk.klass.name}();\n"
-      out << "__cobj__->__obj__ = "
-      out << "Data_Wrap_Struct(__klass__, RubyObject::__mark, RubyObject::__free, __cobj__);\n"
+      out << "cobj = new #{mk.klass.name}();\n"
+      out << "cobj->__obj__ = "
+      out << "Data_Wrap_Struct(klass, RubyObject::__mark, RubyObject::__free, cobj);\n"
 
-      out << "return __cobj__->__obj__;\n"
+      out << "return cobj->__obj__;\n"
       out << "}\n"
     end
   end
@@ -549,8 +551,7 @@ class Cplus2Ruby::CodeGenerator
     if sc != Object
       sc = sc.name
     else
-      sc = nil
-      #sc = "RubyObject"
+      sc = "RubyObject"
     end
     out << " : #{sc}\n" if sc
 
@@ -564,11 +565,11 @@ class Cplus2Ruby::CodeGenerator
     out << "#{model_class.klass.name}();\n\n"
 
     # declaration of __mark__ and __free__ methods
-    #out << "// mark method\n"
-    #out << "virtual void __mark__();\n\n"
+    out << "// mark method\n"
+    out << "virtual void __mark__();\n\n"
 
-    #out << "// free method\n"
-    #out << "virtual void __free__();\n\n"
+    out << "// free method\n"
+    out << "virtual void __free__();\n\n"
 
     model_class.properties.each do |prop|
       property(prop, out)
@@ -585,8 +586,8 @@ class Cplus2Ruby::CodeGenerator
     out << model_class.helper_codes.join("\n")
 
     constructor(model_class, out)
-    #ruby_mark(model_class, out)
-    #ruby_free(model_class, out)
+    ruby_mark(model_class, out)
+    ruby_free(model_class, out)
 
     model_class.methods.each do |meth|
       method_body(meth, model_class, out)
@@ -658,15 +659,22 @@ class Cplus2Ruby::CodeGenerator
 
   def header(out)
     out << <<EOS
-#ifndef NULL
+/*#ifndef NULL
 #define NULL 0L
-#endif 
-/*struct RubyObject {
+#endif */
+//#include "ruby.h"
+struct RubyObject {
+
   VALUE __obj__;
 
   RubyObject() {
     __obj__ = Qnil;
   }
+
+  /*void *operator new (size_t num_bytes)
+  {
+    return malloc(num_bytes + sizeof(VALUE));
+  }*/
 
   virtual ~RubyObject() {};
 
@@ -678,9 +686,9 @@ class Cplus2Ruby::CodeGenerator
     ((RubyObject*)ptr)->__mark__();
   }
 
-  virtual void __free__() { delete this; }
+  virtual void __free__() { /*delete this;*/ }
   virtual void __mark__() { }
-}; */
+};
 EOS
   end
 

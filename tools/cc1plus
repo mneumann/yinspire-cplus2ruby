@@ -11,6 +11,11 @@ file=""
 skip_next="false"
 want_outfile="false"
 
+fail() {
+  echo "abnormal exit: $1"
+  exit 2
+}
+
 for i in $*; do
   if [ $skip_next = "true" ]; then
     skip_next="false"
@@ -18,7 +23,7 @@ for i in $*; do
   elif [ $want_outfile = "true" ]; then
     want_outfile="false"
     if [ "$outfile" != "" ]; then 
-      exit 1
+      fail "outfile already specified"
     fi
     outfile=$i
   else
@@ -35,9 +40,12 @@ for i in $*; do
 	  parameters="$parameters $i"
 	else
 	  if [ "$file" != "" ]; then 
-	    exit 1
+            echo "warn: $i used as outfile"
+            outfile=$i
+	    #fail "file already specified"
+          else
+	    file=$i
 	  fi
-	  file=$i
 	fi
 	;;
     esac
@@ -57,7 +65,7 @@ elif [ -x "$cpp" ]; then
 elif [ -x "/usr/libexec/cc1plus" ]; then
   CPP=/usr/libexec/cc1plus
 else
-  exit 1
+  fail "no CPP found" 
 fi
 
 ${CPP} $*
@@ -73,7 +81,7 @@ fi
 
 echo t | $SED t >/dev/null 2>/dev/null
 if [ "$?" != "0" ]; then
-  exit 1
+  fail "no sed found"
 fi
 
 if [ "${outfile%.ii}" != "$outfile" ]; then

@@ -2,23 +2,23 @@ class Simulator
   #
   # The current simulation time.
   #
-  property :schedule_current_time, 'stime'
+  property :schedule_current_time, 'simtime'
 
   #
   # The time step used for stepped scheduling.
   #
-  property :schedule_step, 'stime', default: '%s = INFINITY'
+  property :schedule_step, 'simtime', default: '%s = INFINITY'
 
   #
   # The time of the next step.
   #
-  property :schedule_next_step, 'stime', default: '%s = INFINITY'
+  property :schedule_next_step, 'simtime', default: '%s = INFINITY'
 
   #
   # The tolerance (time difference) up to which local stimuli are
   # accumulated.
   #
-  property :stimuli_tolerance, 'stime', default: '%s = -INFINITY'
+  property :stimuli_tolerance, 'simtime', default: '%s = -INFINITY'
 
   #
   # Priority queue used to schedule the entities.
@@ -43,15 +43,28 @@ class Simulator
   # 
   # Contains all entities known by the simulator.
   #
-  property :entities, 'Hash<std::string, NeuralEntity *>', internal: true
+  helper_code %{
+    void mark_entity(std::string& id, NeuralEntity *& ent, int i)
+    {
+      if (ent) rb_gc_mark(ent->__obj__);
+    }
+
+    void mark_entities(Hash<std::string, NeuralEntity *>& h)
+    {
+      h.each<int>(mark_entity, 0);
+    }
+  }
+
+  property :entities, 'Hash<std::string, NeuralEntity *>', internal: true, mark:
+    "mark_entities(%s)"
 
   #
   # Start the simulation.
   #
-  method :run, {stop_at: 'stime'}, %{
+  method :run, {stop_at: 'simtime'}, %{
     while (true)
     {
-      stime next_stop = MIN(stop_at, @schedule_next_step);
+      simtime next_stop = MIN(stop_at, @schedule_next_step);
 
       /* 
        * Calculate all events from the priority queue until the next time
@@ -87,7 +100,7 @@ class Simulator
     }
   }
 
-  method :record_fire_event, {at: 'stime', source: NeuralEntity}, %{
+  method :record_fire_event, {at: 'simtime', source: NeuralEntity}, %{
     @fire_counter++;
   }
   
@@ -152,17 +165,31 @@ class Simulator
       jsonHash *hash = dynamic_cast<jsonHash*>(t->get(1));
 
       NeuralEntity *entity;
+      VALUE e;
 
       if (type->value == "Synapse")
       {
-        entity = new Synapse();
+        e = rb_eval_string("Synapse.new");
+        Check_Type(e, T_DATA);
+        entity = (NeuralEntity*)DATA_PTR(e);
+
+        //entity = new Synapse();
       }
       else
       {
-        entity = new Neuron_SRM_01();
+         e = rb_eval_string("Neuron_SRM_01.new");
+         Check_Type(e, T_DATA);
+         entity = (NeuralEntity*)DATA_PTR(e);
+
+         //entity = new Neuron_SRM_01();
       }
 
       entity->id = dynamic_cast<jsonString*>(id)->value;
+
+      //std::cout << entity->id << std::endl;
+
+      // TODO: mark the entities array!
+
       entity->simulator = d->simulator;
       d->simulator->entities[entity->id] = entity;
 
@@ -203,6 +230,27 @@ class Simulator
 
     // events
     events->each(events_each, this); 
+
+    data->ref_decr();
+  }, internal: true 
+
+
+  helper_header %{
+    #include <iostream>
   } 
+
+  method :test_run, {stop_at: 'simtime', tolerance: 'real'}, %{
+    char *net = "/tmp/gereon2005.json";
+    std::cout << "net: " << net << std::endl;
+    std::cout << "stop_at: " << stop_at << std::endl;
+    std::cout << "tolerance: " << tolerance << std::endl;
+
+    @stimuli_tolerance = tolerance;
+    load(net);
+    run(stop_at);
+
+    std::cout << @event_counter << std::endl;
+    std::cout << @fire_counter << std::endl;
+  }
 
 end
