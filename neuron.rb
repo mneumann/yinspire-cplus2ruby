@@ -1,7 +1,7 @@
 #
 # The base class of all neurons.
 #
-class Neuron
+class Neuron < NeuralEntity
 
   #
   # Pointers to the first pre/post Synapse.
@@ -30,13 +30,22 @@ class Neuron
   #
   property :hebb, 'bool', default: '%s = false'
 
-  method :load, {data: 'jsonHash*'}, %{
-    super::load(data);
-    @abs_refr_duration = data->get_number("abs_refr_duration", 0.0);
-    @last_spike_time = data->get_number("last_spike_time", -INFINITY);
-    @last_fire_time = data->get_number("last_fire_time", -INFINITY);
-    @hebb = data->get_bool("hebb", false);
-  }, internal: true
+
+  def load(data)
+    super
+    self.abs_refr_duration = data['abs_refr_duration'] || 0.0
+    self.last_spike_time = data['last_spike_time'] || -INFINITY
+    self.last_fire_time = data['last_fire_time'] || -INFINITY
+    self.hebb = data['hebb'] || false
+  end
+
+  def dump(into)
+    super
+    into['abs_refr_duration'] = self.abs_refr_duration
+    into['last_spike_time'] = self.last_spike_time
+    into['last_fire_time'] = self.last_fire_time
+    into['hebb'] = self.hebb
+  end
 
   method :each_connection, {iter: 'void (*%s)(NeuralEntity*,NeuralEntity*)'}, %{
     for (Synapse *syn = @first_post_synapse; syn != NULL;

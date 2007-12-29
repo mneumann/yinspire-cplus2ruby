@@ -27,9 +27,7 @@ class NeuralEntity
   # Simulator (during loading or constructing a neural net) and SHOULD
   # NOT be changed afterwards (because it's used as a key in a Hash).
   #
-  property :id, 'std::string', internal: true
-
-  property :iid
+  property :id
 
   #
   # Each NeuralEntity has a reference back to the Simulator. This is
@@ -88,7 +86,8 @@ class NeuralEntity
   # state does not contain the net connections which have to be dumped
   # separatly by the Simulator using +each_connection+.
   #
-  method :dump, {into: 'jsonHash*'}, nil, virtual: true, internal: true
+  def dump(into)
+  end
 
   #
   # Load the internal state of a NeuralEntity from +data+. Note that
@@ -96,7 +95,8 @@ class NeuralEntity
   # loading, which means that you have to take care that the
   # NeuralEntity is not put in an inconsistent state!
   #
-  method :load, {data: 'jsonHash*'}, nil, virtual: true, internal: true
+  def load(data)
+  end
 
   #
   # Connect +self+ with +target+.

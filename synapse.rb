@@ -1,4 +1,4 @@
-class Synapse
+class Synapse < NeuralEntity
 
   # 
   # The fire weight of a Synapse.
@@ -105,9 +105,15 @@ class Synapse
     iter(this, @post_neuron);
   }, virtual: true, internal: true
 
-  method :load, {data: 'jsonHash*'}, %{
-    super::load(data);
-    @weight = data->get_number("weight", 0.0);
-    @delay = data->get_number("delay", 0.0);
-  }, virtual: true, internal: true
+  def load(data)
+    super
+    self.weight = data['weight'] || 0.0
+    self.delay = data['delay'] || 0.0
+  end
+
+  def dump(into)
+    super
+    into['weight'] = self.weight
+    into['delay'] = self.delay
+  end
 end

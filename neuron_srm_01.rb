@@ -48,12 +48,21 @@ class Neuron_SRM_01 < Neuron
     fire_synapses(at);
   }, inline: true
 
-  method :load, {data: 'jsonHash*'}, %{
-    super::load(data);
-    @tau_m = data->get_number("tau_m", 0.0);
-    @tau_ref = data->get_number("tau_ref", 0.0);
-    @ref_weight = data->get_number("ref_weight", 0.0);
-    @mem_pot = data->get_number("mem_pot", 0.0);
-    @const_threshold = data->get_number("const_threshold", 0.0);
-  }, virtual: true, internal: true
+  def load(data)
+    super
+    self.tau_m = data['tau_m'] || 0.0
+    self.tau_ref = data['tau_ref'] || 0.0
+    self.ref_weight = data['ref_weight'] || 0.0
+    self.mem_pot = data['mem_pot'] || 0.0
+    self.const_threshold = data['const_threshold'] || 0.0
+  end
+
+  def dump(into)
+    super
+    into['tau_m'] = self.tau_m
+    into['tau_ref'] = self.tau_ref
+    into['ref_weight'] = self.ref_weight
+    into['mem_pot'] = self.mem_pot
+    into['const_threshold'] = self.const_threshold
+  end
 end
