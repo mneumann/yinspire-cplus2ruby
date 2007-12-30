@@ -10,6 +10,7 @@ Cplus2Ruby << %{
   #include <assert.h>
   #include <math.h>
   #include "binary_heap.h"
+  #include "indexed_binary_heap.h"
   #include "memory_allocator.h"
 
   #define real_exp expf
