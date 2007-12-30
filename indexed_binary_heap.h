@@ -68,6 +68,15 @@ class IndexedBinaryHeap : public BinaryHeap<E, MA, ACC>
         }
       }
 
+    /*
+     * Remove this element from the heap.
+     */
+    void
+      remove(E& element)
+      {
+        // FIXME
+      }
+
   protected:
 
     inline void
