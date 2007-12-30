@@ -8,6 +8,75 @@
 # License::   Released under the same terms as Ruby itself.
 #
 
+if RUBY_VERSION >= "1.9"
+  OHash = Hash
+else
+  # Ordered Hash
+  class OHash < Hash
+    attr_reader :order
+
+    def dup
+      n = OHash.new
+      each do |k, v|
+        n[k] = v
+      end
+      n
+    end
+
+    def []=(k, v)
+      @order ||= []
+      @order << k unless @order.include?(k)
+      super
+    end
+
+    def [](k)
+      @order ||= []
+      @order << k unless @order.include?(k)
+      super
+    end
+
+    def delete(k)
+      @order ||= []
+      @order.delete(k)
+      super
+    end
+
+    def update(hash)
+      hash.each do |k,v|
+        self[k] = v
+      end
+    end
+
+    def keys
+      @order ||= []
+      @order
+    end
+
+    def each
+      @order ||= []
+      @order.each do |k|
+        yield k, self[k]
+      end
+      self
+    end
+
+    def each_value
+      @order ||= []
+      @order.each do |k|
+        yield self[k]
+      end
+      self
+    end
+
+    def all?
+      each do |k, v|
+        return false unless yield k, v
+      end
+      return true
+    end
+  end
+end
+
 module Cplus2Ruby
 
   # 
@@ -56,10 +125,43 @@ module Cplus2Ruby
   end
 
   def property(name, type=Object, options={})
+    type = type.to_s if type.is_a?(Symbol)
     Cplus2Ruby.model[self].add_property(name, type, options)
   end
 
-  def method(name, params, body=nil, options={})
+  #
+  # method :name, {hash}, {hash}, ..., {hash}, body, hash 
+  #
+  def method(name, *args)
+    params = OHash.new
+    body = nil
+    options = {}
+
+    state = :want_param
+
+    while not args.empty?
+      arg = args.shift
+
+      case state
+      when :want_param
+        if arg.is_a?(Hash)
+          params.update(arg)
+        else
+          args.unshift(arg)
+          state = :want_body
+        end
+      when :want_body
+        body = arg
+        state = :want_options
+      when :want_options
+        raise unless arg.is_a?(Hash)
+        raise unless args.empty?
+        options = arg
+      else
+        raise
+      end
+    end
+
     Cplus2Ruby.model[self].add_method(name, params, body, options)
   end 
 
@@ -125,8 +227,8 @@ class Cplus2Ruby::Model
   attr_reader :type_aliases, :type_map, :code
 
   def initialize
-    @model_classes = Hash.new
-    @type_aliases = Hash.new
+    @model_classes = OHash.new
+    @type_aliases = OHash.new
     @type_map = get_type_map()
     @code = ""
 
@@ -186,57 +288,57 @@ class Cplus2Ruby::Model
 
   def object_type_map(type)
     {
-      init:   'NULL',
-      mark:   'if (%s) rb_gc_mark(%s->__obj__)',
-      ruby2c: "(NIL_P(%s) ? NULL : (#{type}*)DATA_PTR(%s))",
-      c2ruby: '(%s ? %s->__obj__ : Qnil)', 
-      ctype:  "#{type} *%s",
-      ruby2c_checktype: 'if (!NIL_P(%s)) Check_Type(%s, T_DATA)'
+      :init   => "NULL",
+      :mark   => "if (%s) rb_gc_mark(%s->__obj__)",
+      :ruby2c => "(NIL_P(%s) ? NULL : (#{type}*)DATA_PTR(%s))",
+      :c2ruby => "(%s ? %s->__obj__ : Qnil)", 
+      :ctype  => "#{type} *%s",
+      :ruby2c_checktype => "if (!NIL_P(%s)) Check_Type(%s, T_DATA)"
     }
   end
 
   def get_type_map
     { 
       'VALUE' => {
-        init:   'Qnil',
-        mark:   'rb_gc_mark(%s)',
-        ruby2c: '%s',
-        c2ruby: '%s',
-        ctype:  'VALUE %s' 
+        :init   => 'Qnil',
+        :mark   => 'rb_gc_mark(%s)',
+        :ruby2c => '%s',
+        :c2ruby => '%s',
+        :ctype  => 'VALUE %s' 
       },
       'float' => {
-        init:   0.0,
-        ruby2c: '(float)NUM2DBL(%s)',
-        c2ruby: 'rb_float_new((double)%s)',
-        ctype:  'float %s'
+        :init   => 0.0,
+        :ruby2c => '(float)NUM2DBL(%s)',
+        :c2ruby => 'rb_float_new((double)%s)',
+        :ctype  => 'float %s'
       },
       'double' => {
-        init:   0.0,
-        ruby2c: '(double)NUM2DBL(%s)',
-        c2ruby: 'rb_float_new(%s)',
-        ctype:  'double %s'
+        :init   => 0.0,
+        :ruby2c => '(double)NUM2DBL(%s)',
+        :c2ruby => 'rb_float_new(%s)',
+        :ctype  => 'double %s'
       },
       'int' => {
-        init:   0,
-        ruby2c: '(int)NUM2INT(%s)',
-        c2ruby: 'INT2NUM(%s)',
-        ctype:  'int %s'
+        :init   => 0,
+        :ruby2c => '(int)NUM2INT(%s)',
+        :c2ruby => 'INT2NUM(%s)',
+        :ctype  => 'int %s'
       },
       'unsigned int' => {
-        init:   0,
-        ruby2c: '(unsigned int)NUM2INT(%s)',
-        c2ruby: 'INT2NUM(%s)',
-        ctype:  'unsigned int %s'
+        :init   => 0,
+        :ruby2c => '(unsigned int)NUM2INT(%s)',
+        :c2ruby => 'INT2NUM(%s)',
+        :ctype  => 'unsigned int %s'
       },
       'bool' => { 
-        init:   false,
-        ruby2c: '(RTEST(%s) ? true : false)',
-        c2ruby: '(%s ? Qtrue : Qfalse)',
-        ctype:  'bool %s'
+        :init   => false,
+        :ruby2c => '(RTEST(%s) ? true : false)',
+        :c2ruby => '(%s ? Qtrue : Qfalse)',
+        :ctype  => 'bool %s'
       },
       'void' => {
-        c2ruby:  'Qnil',
-        ctype:   'void'
+        :c2ruby => 'Qnil',
+        :ctype  => 'void'
       }
     }
   end
@@ -356,7 +458,10 @@ class Cplus2Ruby::CodeGenerator
   def ruby_method_wrappers(out)
     @model.each_model_class do |mk|
       mk.methods.each do |meth|
-        next unless meth.params.all? {|_, type| can_convert_type?(type) }
+        unless meth.params.all? {|_, type| can_convert_type?(type) }
+          puts "warn: cannot wrap method #{ meth.name }"
+          next
+        end
 
         params = meth.params.dup
         returns = params.delete(:returns) || 'void'
@@ -688,6 +793,7 @@ struct RubyObject {
     __obj__ = Qnil;
   }
 
+  /* FIXME: ??? */
   void *operator new (size_t num_bytes)
   {
     return malloc(num_bytes + 12);

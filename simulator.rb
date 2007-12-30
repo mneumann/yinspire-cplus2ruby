@@ -7,18 +7,18 @@ class Simulator
   #
   # The time step used for stepped scheduling.
   #
-  property :schedule_step, 'simtime', init: Infinity
+  property :schedule_step, 'simtime', :init => Infinity
 
   #
   # The time of the next step.
   #
-  property :schedule_next_step, 'simtime', init: Infinity
+  property :schedule_next_step, 'simtime', :init => Infinity
 
   #
   # The tolerance (time difference) up to which local stimuli are
   # accumulated.
   #
-  property :stimuli_tolerance, 'simtime', init: Infinity
+  property :stimuli_tolerance, 'simtime', :init => Infinity
 
   #
   # Priority queue used to schedule the entities.
@@ -51,7 +51,7 @@ class Simulator
   #
   # Start the simulation.
   #
-  method :run, {stop_at: 'simtime'}, %{
+  method :run, {:stop_at => 'simtime'}, %{
     while (true)
     {
       simtime next_stop = MIN(stop_at, @schedule_next_step);
@@ -90,7 +90,7 @@ class Simulator
     }
   }
 
-  method :record_fire_event, {at: 'simtime', source: NeuralEntity}, %{
+  method :record_fire_event, {:at => 'simtime'},{:source => NeuralEntity}, %{
     @fire_counter++;
   }
   
@@ -98,9 +98,9 @@ class Simulator
   # If an entity has changed it's scheduling time, it has to call this
   # method to reflect the change within the priority queue.
   #
-  method :schedule_update, {entity: NeuralEntity}, %{
+  method :schedule_update, {:entity => NeuralEntity}, %{
     @schedule_pq.push_or_update(entity);
-  }, inline: true
+  }, :inline => true
 
   def load_v1(data)
     raise unless data['format'] == 'yinspire.1'
@@ -230,5 +230,4 @@ class Simulator
     entity.load(data)
     return entity
   end
-
 end

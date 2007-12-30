@@ -17,18 +17,18 @@ class Neuron < NeuralEntity
   #
   # Last spike time
   #
-  property :last_spike_time, 'simtime', init: -Infinity
+  property :last_spike_time, 'simtime', :init => -Infinity
   
   #
   # Last fire time
   #
-  property :last_fire_time, 'simtime', init: -Infinity
+  property :last_fire_time, 'simtime', :init => -Infinity
 
   #
   # Whether this neuron is a hebb neuron or not.  A hebb neuron also
   # stimulates it's pre synapses upon firing.
   #
-  property :hebb, 'bool', init: false
+  property :hebb, 'bool', :init => false
 
 
   def load(data)
@@ -114,7 +114,7 @@ class Neuron < NeuralEntity
   # NOTE: The stimulation weight is 0.0 below as the synapse will add
   # it's weight to the preceding neurons.
   #
-  method :fire_synapses, {at: 'simtime'}, %{
+  method :fire_synapses, {:at => 'simtime'}, %{
     if (@hebb) 
     {
       for (Synapse *syn = @first_pre_synapse; syn != NULL;

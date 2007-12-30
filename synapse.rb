@@ -32,12 +32,12 @@ class Synapse < NeuralEntity
   # 
   # We ignore the weight parameter that is passed by the Neuron.
   #
-  method :stimulate, {at: 'simtime', weight: 'real', source: NeuralEntity}, %{
+  method :stimulate, {:at => 'simtime'},{:weight => 'real'},{:source => NeuralEntity}, %{
     if (source != @post_neuron)
     {
       @post_neuron->stimulate(at + @delay, @weight, this);
     }
-  }, virtual: true
+  }, :virtual => true
 
   # 
   # Adding a pre synapse. Target must be a Neuron.

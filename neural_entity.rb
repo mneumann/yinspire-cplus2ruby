@@ -50,7 +50,7 @@ class NeuralEntity
   # If the entity has events in the future, this is the timestamp of the
   # next event.
   #
-  property :schedule_at, 'simtime', init: Infinity
+  property :schedule_at, 'simtime', :init => Infinity
 
   #
   # Each NeuralEntity has it's own local stimuli priority queue.
@@ -97,7 +97,7 @@ class NeuralEntity
   # Returns a Ruby array in the form [at1, weight1, at2, weight2] 
   # for +stimuli_pq+.
   #
-  method :stimuli_pq_to_a, {returns: Object}, %{
+  method :stimuli_pq_to_a, {:returns => Object}, %{
     VALUE ary = rb_ary_new(); 
     @stimuli_pq.each<VALUE>(dump_stimuli, ary);
     return ary;
@@ -156,9 +156,9 @@ class NeuralEntity
   #
   # Overwrite!
   #
-  method :stimulate, {at: 'simtime', weight: 'real', source: NeuralEntity}, %{
+  method :stimulate, {:at => 'simtime'},{:weight => 'real'},{:source => NeuralEntity}, %{
     stimuli_add(at, weight);
-  }, virtual: true
+  }, :virtual => true
 
   #
   # This method is called when a NeuralEntity reaches it's scheduling
@@ -166,7 +166,7 @@ class NeuralEntity
   #
   # Overwrite if you need this behaviour!
   #
-  method :process, {at: 'simtime'}, nil, virtual: true
+  method :process, {:at => 'simtime'}, nil, :virtual => true
 
   #
   # This method is called in each time-step, if and only if a
@@ -174,14 +174,14 @@ class NeuralEntity
   #
   # Overwrite if you need this behaviour!
   #
-  method :process_stepped, {at: 'simtime', step: 'simtime'}, nil, virtual: true
+  method :process_stepped, {:at => 'simtime'},{:step => 'simtime'}, nil, :virtual => true
 
   protected
 
   #
   # Schedule the entity at a specific time.
   #
-  method :schedule, {at: 'simtime'}, %{
+  method :schedule, {:at => 'simtime'}, %{
     // FIXME: make sure that @schedule_at is 
     // reset when entity is removed from pq!
     if (@schedule_at != at)
@@ -194,7 +194,7 @@ class NeuralEntity
   # 
   # Returns +true+ if stepped scheduling is enabled, +false+ otherwise.
   #
-  method :schedule_stepping_enabled, {returns: 'bool'}, %{
+  method :schedule_stepping_enabled, {:returns => 'bool'}, %{
     return (@schedule_stepping_list_prev != NULL && 
             @schedule_stepping_list_next != NULL);
   }
@@ -270,7 +270,7 @@ class NeuralEntity
   # 
   # Add a Stimuli to the local priority queue.
   #
-  method :stimuli_add, {at: 'simtime', weight: 'real'}, %{
+  method :stimuli_add, {:at => 'simtime'},{:weight => 'real'}, %{
     Stimulus s; s.at = at; s.weight = weight;
     if (@simulator->stimuli_tolerance >= 0.0)
     {
@@ -286,7 +286,7 @@ class NeuralEntity
   # 
   # Consume all Stimuli until +till+ and return the sum of the weights.
   #
-  method :stimuli_sum, {till: 'simtime', returns: 'real'}, %{
+  method :stimuli_sum, {:till => 'simtime'},{:returns => 'real'}, %{
     real weight = 0.0;
 
     while (!@stimuli_pq.empty() && @stimuli_pq.top().at <= till)
@@ -312,7 +312,7 @@ class NeuralEntity
   # This treats infinitive values specially and instead of summing them,
   # it sets +is_inf+ to +true+.
   #
-  method :stimuli_sum_inf, {till: 'simtime', is_inf: 'bool&', returns: 'real'}, %{
+  method :stimuli_sum_inf, {:till => 'simtime'},{:is_inf => 'bool&'},{:returns => 'real'}, %{
     real weight = 0.0;
     is_inf = false;
 
@@ -340,15 +340,15 @@ class NeuralEntity
   #
   # Accessor function for BinaryHeap
   #
-  method :bh_cmp_gt, {a: NeuralEntity, b: NeuralEntity, returns: 'bool'}, %{
+  method :bh_cmp_gt, {:a => NeuralEntity},{:b => NeuralEntity},{:returns => 'bool'}, %{
     return (a->schedule_at > b->schedule_at);
-  }, static: true, inline: true
+  }, :static => true, :inline => true
   
   #
   # Accessor function for BinaryHeap
   #
-  method :bh_index, {a: NeuralEntity, returns: 'uint&'}, %{
+  method :bh_index, {:a => NeuralEntity},{:returns => 'uint&'}, %{
     return a->schedule_index;
-  }, static: true, inline: true
+  }, :static => true, :inline => true
 
 end

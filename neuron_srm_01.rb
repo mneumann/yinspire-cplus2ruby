@@ -9,15 +9,15 @@ class Neuron_SRM_01 < Neuron
   property :mem_pot, 'real'
   property :const_threshold, 'real'
 
-  method :stimulate, {at: 'simtime', weight: 'real', source: NeuralEntity}, %{
+  method :stimulate, {:at => 'simtime'},{:weight => 'real'},{:source => NeuralEntity}, %{
     if (at >= @last_fire_time + @abs_refr_duration)
     {
       @simulator->event_counter++;
       super::stimulate(at, weight, source);
     }
-  }, virtual: true
+  }, :virtual => true
 
-  method :process, {at: 'simtime'}, %{
+  method :process, {:at => 'simtime'}, %{
     real weight = stimuli_sum(at);
     const real delta = at - @last_fire_time - @abs_refr_duration;
 
@@ -39,14 +39,14 @@ class Neuron_SRM_01 < Neuron
     {
       fire(at);
     }
-  }, virtual: true
+  }, :virtual => true
 
-  method :fire, {at: 'simtime'}, %{
+  method :fire, {:at => 'simtime'}, %{
     @simulator->record_fire_event(at, this);
     @mem_pot = 0.0;
     @last_fire_time = at;
     fire_synapses(at);
-  }, inline: true
+  }, :inline => true
 
   def load(data)
     super

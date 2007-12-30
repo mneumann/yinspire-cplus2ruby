@@ -1,5 +1,5 @@
 CC=g++
-RUBY=/usr/local/bin/ruby19
+RUBY=/usr/local/bin/ruby
 
 default: build
 
