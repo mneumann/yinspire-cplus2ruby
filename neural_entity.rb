@@ -148,6 +148,8 @@ class NeuralEntity
     raise "abstract method"
   end
 
+  virtual :stimulate, :process, :process_stepped
+
   #
   # Stimulate an entity +at+ a specific time with a specific +weight+
   # and from a specific +source+.
@@ -158,7 +160,7 @@ class NeuralEntity
   #
   method :stimulate, {:at => 'simtime'},{:weight => 'real'},{:source => NeuralEntity}, %{
     stimuli_add(at, weight);
-  }, :virtual => true
+  }
 
   #
   # This method is called when a NeuralEntity reaches it's scheduling
@@ -166,7 +168,7 @@ class NeuralEntity
   #
   # Overwrite if you need this behaviour!
   #
-  method :process, {:at => 'simtime'}, nil, :virtual => true
+  method :process, {:at => 'simtime'}, nil
 
   #
   # This method is called in each time-step, if and only if a
@@ -174,7 +176,7 @@ class NeuralEntity
   #
   # Overwrite if you need this behaviour!
   #
-  method :process_stepped, {:at => 'simtime'},{:step => 'simtime'}, nil, :virtual => true
+  method :process_stepped, {:at => 'simtime'},{:step => 'simtime'}, nil
 
   protected
 

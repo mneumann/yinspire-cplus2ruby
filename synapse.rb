@@ -37,7 +37,7 @@ class Synapse < NeuralEntity
     {
       @post_neuron->stimulate(at + @delay, @weight, this);
     }
-  }, :virtual => true
+  }
 
   # 
   # Adding a pre synapse. Target must be a Neuron.

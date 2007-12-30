@@ -129,6 +129,12 @@ module Cplus2Ruby
     Cplus2Ruby.model[self].add_property(name, type, options)
   end
 
+  def virtual(*args)
+    args.each do |virt|
+      Cplus2Ruby.model[self].add_virtual(virt)
+    end
+  end
+
   #
   # method :name, {hash}, {hash}, ..., {hash}, body, hash 
   #
@@ -345,7 +351,8 @@ class Cplus2Ruby::Model
 end
 
 class Cplus2Ruby::Model::ModelClass
-  attr_accessor :klass, :properties, :methods, :helper_headers, :helper_codes
+  attr_reader :klass, :properties, :methods, :helper_headers, :helper_codes
+  attr_reader :virtuals
 
   def initialize(klass)
     @klass = klass
@@ -353,6 +360,11 @@ class Cplus2Ruby::Model::ModelClass
     @methods = []
     @helper_headers = []
     @helper_codes = []
+    @virtuals = []
+  end
+
+  def add_virtual(virt)
+    @virtuals << virt
   end
 
   def add_property(name, type, options)
@@ -368,10 +380,9 @@ class Cplus2Ruby::Model::ModelClass
   end
 
   def add_method(name, params, body, options)
-    @methods << Cplus2Ruby::Model::ModelMethod.new(name, params, body, options)
+    @methods << Cplus2Ruby::Model::ModelMethod.new(self, name, params, body, options)
   end
 end
-
 
 class Cplus2Ruby::Model::ModelProperty
   attr_accessor :name, :type, :options
@@ -382,7 +393,8 @@ end
 
 class Cplus2Ruby::Model::ModelMethod
   attr_accessor :name, :params, :body, :options
-  def initialize(name, params, body, options)
+  def initialize(model_class, name, params, body, options)
+    @model_class = model_class
     @name, @params, @body, @options = name, params, body, options
   end
 
@@ -391,6 +403,25 @@ class Cplus2Ruby::Model::ModelMethod
     n -= 1 if @params.include?(:returns)
     return n
   end
+
+  def virtual?
+    if options[:virtual]
+      return true
+    else
+      mc = @model_class
+      while mc
+        return true if mc.virtuals.include?(@name)
+        sc = mc.klass.superclass
+        if sc and sc.ancestors.include?(Cplus2Ruby)
+          mc = Cplus2Ruby.model[sc]
+        else
+          break
+        end
+      end
+    end
+    return false
+  end
+
 end
 
 class Cplus2Ruby::CodeGenerator
@@ -765,7 +796,8 @@ class Cplus2Ruby::CodeGenerator
 
     out << "static " if meth.options[:static] 
     out << "inline " if meth.options[:inline]
-    out << "virtual " if meth.options[:virtual]
+
+    out << "virtual " if meth.virtual?
 
     out << @model.type_encode(returns, "")
     out << " "
@@ -774,14 +806,14 @@ class Cplus2Ruby::CodeGenerator
     out << params.map do |k, v|
       @model.type_encode(v, k)
     end.join(", ")
-    out << ")\n"
+    out << ")"
 
     if meth.options[:inline]
-      out << "{"
+      out << "\n{"
       out << meth.body
       out << "}"
     else
-      out << ";"
+      out << ";\n"
     end
   end
 

@@ -15,7 +15,7 @@ class Neuron_SRM_01 < Neuron
       @simulator->event_counter++;
       super::stimulate(at, weight, source);
     }
-  }, :virtual => true
+  }
 
   method :process, {:at => 'simtime'}, %{
     real weight = stimuli_sum(at);
@@ -39,7 +39,7 @@ class Neuron_SRM_01 < Neuron
     {
       fire(at);
     }
-  }, :virtual => true
+  }
 
   method :fire, {:at => 'simtime'}, %{
     @simulator->record_fire_event(at, this);
