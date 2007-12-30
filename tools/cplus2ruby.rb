@@ -735,6 +735,7 @@ class Cplus2Ruby::CodeGenerator
   end
  
   def method_body(meth, model_class, out)
+    return if meth.options[:inline]
     params = meth.params.dup
     returns = params.delete(:returns) || "void"
 
@@ -773,7 +774,15 @@ class Cplus2Ruby::CodeGenerator
     out << params.map do |k, v|
       @model.type_encode(v, k)
     end.join(", ")
-    out << ");\n"
+    out << ")\n"
+
+    if meth.options[:inline]
+      out << "{"
+      out << meth.body
+      out << "}"
+    else
+      out << ";"
+    end
   end
 
   def property(prop, out)
