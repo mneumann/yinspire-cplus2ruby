@@ -84,14 +84,10 @@ class NeuralEntity
   #
   # Helper code for method +stimuli_pq_to_a+.
   #
-  helper_code %{
-    static void
-    dump_stimuli(Stimulus& s, VALUE ary)
-    {
-      rb_ary_push(ary, rb_float_new(s.at));
-      rb_ary_push(ary, rb_float_new(s.weight));
-    }
-  }
+  method :dump_stimuli, {:s => 'Stimulus&'},{:ary => 'VALUE'}, %{
+    rb_ary_push(ary, rb_float_new(s.at));
+    rb_ary_push(ary, rb_float_new(s.weight));
+  }, :static => true
 
   #
   # Returns a Ruby array in the form [at1, weight1, at2, weight2] 
