@@ -135,6 +135,10 @@ module Cplus2Ruby
     end
   end
 
+  def properties
+    Cplus2Ruby.model[self].properties
+  end
+
   #
   # method :name, {hash}, {hash}, ..., {hash}, body, hash 
   #
@@ -243,20 +247,19 @@ class Cplus2Ruby::Model
 
   def add_type_alias(h)
     @type_aliases.update(h)
-  end
-
-  def expand_type_map!
-    @type_aliases.each do |from, to|
+    h.each do |from, to|
       @type_map[from] = @type_map[to]
     end
+  end
 
-    each_model_class do |m|
-      @type_map[m.klass] = object_type_map(m.klass.name)
-    end
+  def new_model_class_for(klass)
+    mk = Cplus2Ruby::Model::ModelClass.new(klass)
+    @type_map[mk.klass] = object_type_map(mk.klass.name)
+    mk
   end
 
   def [](klass)
-    @model_classes[klass] ||= Cplus2Ruby::Model::ModelClass.new(klass)
+    @model_classes[klass] ||= new_model_class_for(klass)
   end
 
   def each_model_class(&block)
@@ -385,9 +388,13 @@ class Cplus2Ruby::Model::ModelClass
 end
 
 class Cplus2Ruby::Model::ModelProperty
-  attr_accessor :name, :type, :options
+  attr_reader :name, :type, :options
   def initialize(name, type, options)
     @name, @type, @options = name, type, options
+  end
+
+  def init(model)
+    model.lookup_type_entry(:init, self.options, self.type)
   end
 end
 
@@ -427,7 +434,6 @@ end
 class Cplus2Ruby::CodeGenerator
   def initialize(model=Cplus2Ruby.model)
     @model = model
-    @model.expand_type_map!
   end
 
   def write(mod_name)

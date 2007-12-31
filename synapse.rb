@@ -3,12 +3,12 @@ class Synapse < NeuralEntity
   # 
   # The fire weight of a Synapse.
   #
-  property :weight, 'real'
+  property :weight, 'real', :marshal => true
 
   # 
   # The propagation delay of a Synapse.
   #
-  property :delay, 'simtime'
+  property :delay, 'simtime', :marshal => true
 
   #
   # The pre and post Neurons of the Synapse.
@@ -94,17 +94,5 @@ class Synapse < NeuralEntity
 
   def each_connection
     yield self.post_neuron
-  end
-
-  def load(data)
-    super
-    self.weight = data['weight'] || 0.0
-    self.delay = data['delay'] || 0.0
-  end
-
-  def dump(into)
-    super
-    into['weight'] = self.weight
-    into['delay'] = self.delay
   end
 end

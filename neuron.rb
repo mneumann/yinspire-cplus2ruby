@@ -12,40 +12,23 @@ class Neuron < NeuralEntity
   #
   # Duration of the absolute refraction period.
   #
-  property :abs_refr_duration, 'simtime'
+  property :abs_refr_duration, 'simtime', :marshal => true
 
   #
   # Last spike time
   #
-  property :last_spike_time, 'simtime', :init => -Infinity
+  property :last_spike_time, 'simtime', :init => -Infinity, :marshal => true
   
   #
   # Last fire time
   #
-  property :last_fire_time, 'simtime', :init => -Infinity
+  property :last_fire_time, 'simtime', :init => -Infinity, :marshal => true
 
   #
   # Whether this neuron is a hebb neuron or not.  A hebb neuron also
   # stimulates it's pre synapses upon firing.
   #
-  property :hebb, 'bool', :init => false
-
-
-  def load(data)
-    super
-    self.abs_refr_duration = data['abs_refr_duration'] || 0.0
-    self.last_spike_time = data['last_spike_time'] || -Infinity
-    self.last_fire_time = data['last_fire_time'] || -Infinity
-    self.hebb = data['hebb'] || false
-  end
-
-  def dump(into)
-    super
-    into['abs_refr_duration'] = self.abs_refr_duration
-    into['last_spike_time'] = self.last_spike_time
-    into['last_fire_time'] = self.last_fire_time
-    into['hebb'] = self.hebb
-  end
+  property :hebb, 'bool', :init => false, :marshal => true
 
   # 
   # Adding a post synapse. Target must be a Synapse.
