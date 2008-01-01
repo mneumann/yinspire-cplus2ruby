@@ -8,6 +8,7 @@
  *   E: Element type
  *   MA: Memory Allocator
  *   ACC: Accessor 
+ *   MIN_CAPA: minimum number of elements
  *
  * Example:
  *
@@ -26,6 +27,8 @@
 
 #ifndef __YINSPIRE__BINARY_HEAP__
 #define __YINSPIRE__BINARY_HEAP__
+
+#include <assert.h>
 
 template <class E, class MA, class ACC = E, unsigned int MIN_CAPA=1023>
 class BinaryHeap
@@ -55,6 +58,7 @@ class BinaryHeap
         {
           resize();
         }
+        assert(@size <= @capacity);
         @elements[@size] = element;
         update_index(@size);
         propagate_up(@size);
@@ -63,6 +67,7 @@ class BinaryHeap
     void
       pop()
       {
+        assert(@size > 0);
         detach_index(1);
         @elements[1] = @elements[@size];
         @size -= 1;
@@ -76,6 +81,7 @@ class BinaryHeap
     inline E&
       top() const
       {
+        assert(@size > 0);
         return @elements[1];  
       }
 
@@ -138,9 +144,8 @@ class BinaryHeap
         /*
          * index now points to the element that is greater than
          * +element+ (or the non-existing element in case of @size==0).
-         * 
-         * assert(index == 0 || ACC::bh_cmp_gt(element_at(index), element)); 
          */
+        assert(index == 0 || !ACC::bh_cmp_gt(element_at(index), element)); 
 
         if (index == 0 || !accumulator(@elements[index], element, data))
         {
@@ -242,6 +247,8 @@ class BinaryHeap
         {
           @elements = MA::alloc_n(@capacity+1);
         }
+        assert(@elements != NULL);
+        assert(@capacity >= @size);
       }
 
     inline bool

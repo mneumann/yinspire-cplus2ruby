@@ -1,7 +1,6 @@
 CC=g++
 RUBY=/usr/local/bin/ruby
 
-
 default: build
 
 rdoc: 
