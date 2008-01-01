@@ -14,7 +14,7 @@ class NeuralEntity
       real  weight;
 
       inline static bool
-        bh_cmp_gt(Stimulus &a, Stimulus &b)
+        greater_than(Stimulus &a, Stimulus &b)
         {
           return (a.at > b.at); 
         }
@@ -338,14 +338,14 @@ class NeuralEntity
   #
   # Accessor function for BinaryHeap
   #
-  method :bh_cmp_gt, {:a => NeuralEntity},{:b => NeuralEntity},{:returns => 'bool'}, %{
+  method :greater_than, {:a => NeuralEntity},{:b => NeuralEntity},{:returns => 'bool'}, %{
     return (a->schedule_at > b->schedule_at);
   }, :static => true, :inline => true
   
   #
   # Accessor function for BinaryHeap
   #
-  method :bh_index, {:a => NeuralEntity},{:returns => 'uint&'}, %{
+  method :index, {:a => NeuralEntity},{:returns => 'uint&'}, %{
     return a->schedule_index;
   }, :static => true, :inline => true
 

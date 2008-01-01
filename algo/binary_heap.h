@@ -13,7 +13,7 @@
  * Example:
  *
  *   struct acc {
- *     inline static bool bh_cmp_gt(int& i1, int& i2) {
+ *     inline static bool greater_than(int& i1, int& i2) {
  *       return (i1 > i2);
  *     }
  *   }
@@ -136,7 +136,7 @@ class BinaryHeap
          * +element+.
          */ 
         I index = @size; 
-        while (index > 0 && ACC::bh_cmp_gt(element_at(index), element))
+        while (index > 0 && ACC::greater_than(element_at(index), element))
         {
           index /= 2;
         }
@@ -145,7 +145,7 @@ class BinaryHeap
          * index now points to the element that is greater than
          * +element+ (or the non-existing element in case of @size==0).
          */
-        assert(index == 0 || !ACC::bh_cmp_gt(element_at(index), element)); 
+        assert(index == 0 || !ACC::greater_than(element_at(index), element)); 
 
         if (index == 0 || !accumulator(@elements[index], element, data))
         {
@@ -254,7 +254,7 @@ class BinaryHeap
     inline bool
       cmp_gt(I i1, I i2) const
       {
-        return (ACC::bh_cmp_gt(element_at(i1), element_at(i2)));
+        return (ACC::greater_than(element_at(i1), element_at(i2)));
       }
 
     inline void

@@ -21,10 +21,10 @@
  * Example:
  *
  *   struct acc {
- *     inline static unsigned int& bh_index(E& e) {
+ *     inline static unsigned int& index(E& e) {
  *       return e.schedule_index;
  *     }
- *     inline static bool bh_cmp_gt(E& e1, E& e2) {
+ *     inline static bool greater_than(E& e1, E& e2) {
  *       return (e1.schedule_at > e2.schedule_at);
  *     }
  *   }
@@ -50,7 +50,7 @@ class IndexedBinaryHeap : public BinaryHeap<E, MA, ACC, MIN_CAPA>
     void
       update(E& element)
       {
-        I index = ACC::bh_index(element); 
+        I index = ACC::index(element); 
         super::propagate_up(index);
         super::propagate_down(index);
       }
@@ -58,7 +58,7 @@ class IndexedBinaryHeap : public BinaryHeap<E, MA, ACC, MIN_CAPA>
     inline void 
       push_or_update(E& element)
       {
-        if (ACC::bh_index(element) == 0)
+        if (ACC::index(element) == 0)
         {
           super::push(element);
         }
@@ -82,13 +82,13 @@ class IndexedBinaryHeap : public BinaryHeap<E, MA, ACC, MIN_CAPA>
     inline void
       update_index(I i)
       {
-        ACC::bh_index(super::element_at(i)) = i;
+        ACC::index(super::element_at(i)) = i;
       }
 
     inline void
       detach_index(I i)
       {
-        ACC::bh_index(super::element_at(i)) = 0;
+        ACC::index(super::element_at(i)) = 0;
       }
 
 };
