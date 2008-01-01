@@ -27,7 +27,7 @@
 #ifndef __YINSPIRE__BINARY_HEAP__
 #define __YINSPIRE__BINARY_HEAP__
 
-template <class E, class MA, class ACC = E>
+template <class E, class MA, class ACC = E, unsigned int MIN_CAPA=1023>
 class BinaryHeap
 {
     typedef unsigned int I; // index type
@@ -228,7 +228,7 @@ class BinaryHeap
     void
       resize(I new_capacity)
       {
-        if (new_capacity < 1023) new_capacity = 1023;  // minimum capacity!
+        if (new_capacity < MIN_CAPA) new_capacity = MIN_CAPA;  // minimum capacity!
         @capacity = new_capacity; 
 
         /* 

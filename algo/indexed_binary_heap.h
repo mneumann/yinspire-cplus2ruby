@@ -39,11 +39,11 @@
 
 #include "binary_heap.h"
 
-template <class E, class MA, class ACC = E> 
-class IndexedBinaryHeap : public BinaryHeap<E, MA, ACC>
+template <class E, class MA, class ACC = E, unsigned int MIN_CAPA=1023> 
+class IndexedBinaryHeap : public BinaryHeap<E, MA, ACC, MIN_CAPA>
 {
     typedef unsigned int I; // index type
-    typedef BinaryHeap<E, MA, ACC> super; 
+    typedef BinaryHeap<E, MA, ACC, MIN_CAPA> super; 
 
   public:
 
