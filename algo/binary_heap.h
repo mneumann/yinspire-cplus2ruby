@@ -30,7 +30,7 @@
 template <class E, class MA, class ACC = E>
 class BinaryHeap
 {
-    typedef unsigned int I;
+    typedef unsigned int I; // index type
 
   public:
 

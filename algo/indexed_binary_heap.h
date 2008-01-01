@@ -42,7 +42,7 @@
 template <class E, class MA, class ACC = E> 
 class IndexedBinaryHeap : public BinaryHeap<E, MA, ACC>
 {
-    typedef unsigned int I;
+    typedef unsigned int I; // index type
     typedef BinaryHeap<E, MA, ACC> super; 
 
   public:
