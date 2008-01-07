@@ -1,6 +1,6 @@
 WARMUP_CYCLES = 10_000_000 
-EMPTY_HOLD_CYCLES = 100_000_000 
-HOLD_CYCLES = 100_000_000 
+EMPTY_CYCLES = 100_000_000 
+CYCLES = 100_000_000 
 
 DISTRIBUTIONS = [
   'Random',
@@ -20,12 +20,10 @@ ALGORITHMS = [
 ]
 
 REPEAT = 5
-
 QUEUE_SIZES = (1..7).map {|x| 10**x}
-#QUEUE_SIZES = [1000] #(1..6).map {|x| 10**x}
 
-def bench(queue_size, warmup_cycles, empty_hold_cycles, hold_cycles, distribution, algorithm) 
-  cmd =  "./bench #{queue_size} #{warmup_cycles} #{empty_hold_cycles} #{hold_cycles}"
+def bench(queue_size, warmup_cycles, empty_cycles, cycles, distribution, algorithm) 
+  cmd =  "./bench #{queue_size} #{warmup_cycles} #{empty_cycles} #{cycles} ClassicHold"
   cmd << " #{distribution} #{algorithm}"
   p cmd
   parse_result(`#{cmd}`)
@@ -51,9 +49,9 @@ def bench_algorithm(algorithm, prefix, repeat=nil, distributions=nil, queue_size
   repeat.times do 
     distributions.each do |distr|
       queue_sizes.each do |qs|
-        res = bench(qs, WARMUP_CYCLES, EMPTY_HOLD_CYCLES, HOLD_CYCLES, distr, algorithm)
+        res = bench(qs, WARMUP_CYCLES, EMPTY_CYCLES, CYCLES, distr, algorithm)
         h[res['Distribution']] ||= {}
-        (h[res['Distribution']][res['QueueSize']] ||= []) << res['HoldTime'].to_f
+        (h[res['Distribution']][res['QueueSize']] ||= []) << res['Time'].to_f
       end
     end
   end
@@ -113,8 +111,6 @@ def bench_algorithm(algorithm, prefix, repeat=nil, distributions=nil, queue_size
   system "gnuplot #{prefix}.plot"
 end 
 
-#bench_algorithm("BinaryHeap STIMULI", "work/a1")
-#bench_algorithm("BinaryHeap STIMULI", "work/a2", 1, ["Random"], [100_000, 1_000_000, 10_000_000])
 Dir.mkdir('work') rescue nil
 
 qs = (14..22).map {|x| 2**x}

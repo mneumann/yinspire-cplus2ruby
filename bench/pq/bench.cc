@@ -1,4 +1,4 @@
-#include "classic_hold.h"
+#include "benchmark.h"
 #include <time.h>
 #include <stdlib.h>
 #include <iostream>
@@ -37,40 +37,60 @@ struct ET_STIMULI
 #include "bench_binaryheap.h"
 #include "bench_stlpq.h"
 
+enum {
+  METHOD_CLASSIC_HOLD = 1,
+  METHOD_UPDOWN = 2
+};
+
 template<class ET, class PQ, class ACC>
 void measure(Distribution *dis, 
     int queue_size,
     int warmup_cycles,
-    int empty_hold_cycles,
-    int hold_cycles)
+    int empty_cycles,
+    int cycles,
+    int method)
 {
   PQ pq;
-  ClassicHold<PQ, ACC> ch(&pq, dis);
+  Benchmark<PQ, ACC> bm(&pq, dis);
+  double time;
+  const char *method_name;
 
-  std::cout << "Method:           " << "Classic Hold" << std::endl;
+  switch (method)
+  {
+    case METHOD_CLASSIC_HOLD:
+      time = bm.classic_hold(queue_size, warmup_cycles, empty_cycles, cycles);
+      method_name = "ClassicHold";
+      break;
+
+    case METHOD_UPDOWN:
+      time = bm.updown(queue_size, warmup_cycles, empty_cycles, cycles);
+      method_name = "UpDown";
+      break;
+
+    default:
+      throw "invalid method";
+  };
+
+  std::cout << "Method:           " << method_name << std::endl;
   std::cout << "Algorithm:        " << ACC::algorithm_name() << std::endl;
   std::cout << "ElementSize:      " << sizeof(ET) << std::endl;
   std::cout << "ElementType:      " << ET::element_type() << std::endl;
   std::cout << "Distribution:     "; dis->output_name(std::cout); std::cout << std::endl;
   std::cout << "QueueSize:        " << queue_size << std::endl;
   std::cout << "WarmupCycles:     " << warmup_cycles << std::endl; 
-  std::cout << "EmptyHoldCycles:  " << empty_hold_cycles << std::endl; 
-  std::cout << "HoldCycles:       " << hold_cycles << std::endl; 
+  std::cout << "EmptyCycles:      " << empty_cycles << std::endl; 
+  std::cout << "Cycles:           " << cycles << std::endl; 
   std::cout << "CompilerOptFlags: " << _COMPILER_OPTFLAGS_ << std::endl;
   std::cout << "CompilerName:     " << _COMPILER_NAME_ << std::endl;
   std::cout << "CompileDate:      " << _COMPILE_DATE_ << std::endl;
   std::cout << "Uname:            " << _UNAME_ << std::endl;
   std::cout << "CpuFreq:          " << _CPUFREQ_ << std::endl;
-
-  double hold_time = ch.measure(queue_size, warmup_cycles, empty_hold_cycles, hold_cycles);
-
-  std::cout << "HoldTime:         " << hold_time << std::endl;
-
+  std::cout << "Time:             " << time << std::endl;
   std::cout << std::endl;
 }
 
 #define MEASURE(ns, et) measure<et, ns::T<et>::PQ, ns::T<et>::ACC>( \
-      dis, queue_size, warmup_cycles, empty_hold_cycles, hold_cycles);
+      dis, queue_size, warmup_cycles, empty_cycles, cycles, method);
 
 #define ARG_GET(varname, meth) \
   if (argp < argc) { \
@@ -84,8 +104,10 @@ void run(int argc, char **argv)
   Distribution *dis;
   int queue_size;
   int warmup_cycles;
-  int empty_hold_cycles;
-  int hold_cycles;
+  int empty_cycles;
+  int cycles;
+  int method;
+  std::string method_name;
   std::string distribution;
   std::string algorithm;
   std::string element_type;
@@ -94,8 +116,23 @@ void run(int argc, char **argv)
 
   ARG_GET(queue_size, atoi);
   ARG_GET(warmup_cycles, atoi);
-  ARG_GET(empty_hold_cycles, atoi);
-  ARG_GET(hold_cycles, atoi);
+  ARG_GET(empty_cycles, atoi);
+  ARG_GET(cycles, atoi);
+
+  ARG_GET(method_name, std::string);
+
+  if (method_name == "ClassicHold")
+  {
+    method = METHOD_CLASSIC_HOLD;
+  }
+  else if (method_name == "UpDown")
+  {
+    method = METHOD_UPDOWN;
+  }
+  else
+  {
+    throw "invalid method name";
+  }
 
   ARG_GET(distribution, std::string);
 
