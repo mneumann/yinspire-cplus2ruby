@@ -17,6 +17,7 @@ fail() {
 }
 
 for i in $*; do
+
   if [ $skip_next = "true" ]; then
     skip_next="false"
     parameters="$parameters $i"
@@ -37,6 +38,7 @@ for i in $*; do
         ;;
       *)
         if [ "${i#-}" != "$i" ]; then
+          # it's not a file: -XX
 	  parameters="$parameters $i"
 	else
 	  if [ "$file" != "" ]; then 

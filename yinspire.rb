@@ -16,6 +16,8 @@ Cplus2Ruby << %{
   #define real_exp expf
   #define real_fabs fabsf
 
+  #define THROW(str) rb_raise(rb_eRuntimeError, str)
+
   #define MIN(a,b) ((a) < (b) ? (a) : (b))
   #define MAX(a,b) ((a) > (b) ? (a) : (b))
   

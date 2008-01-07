@@ -3,10 +3,42 @@
 #include <stdlib.h>
 #include <iostream>
 #include <string>
+
+struct ET_FLOAT 
+{
+  float priority;
+
+  bool operator ()(ET_FLOAT &a, ET_FLOAT &b) { return (a.priority > b.priority); }
+  static const char* element_type() { return "float"; }
+  static inline bool less(const ET_FLOAT &a, const ET_FLOAT &b) { return a.priority < b.priority; }
+};
+
+
+struct ET_DOUBLE 
+{
+  double priority;
+
+  bool operator ()(ET_DOUBLE &a, ET_DOUBLE &b) { return (a.priority > b.priority); }
+  static const char* element_type() { return "double"; }
+  static inline bool less(const ET_DOUBLE &a, const ET_DOUBLE &b) { return a.priority < b.priority; }
+};
+
+
+struct ET_STIMULI
+{
+  float priority;
+  float weight;
+
+  inline bool operator ()(ET_STIMULI &a, ET_STIMULI &b) { return (a.priority > b.priority); }
+  static const char* element_type() { return "Stimuli/float"; }
+  static inline bool less(const ET_STIMULI &a, const ET_STIMULI &b) { return (a.priority < b.priority); }
+};
+
 #include "bench_binaryheap.h"
+#include "bench_stlpq.h"
 
 template<class ET, class PQ, class ACC>
-void measure_binary_heap(Distribution *dis, 
+void measure(Distribution *dis, 
     int queue_size,
     int warmup_cycles,
     int empty_hold_cycles,
@@ -33,15 +65,12 @@ void measure_binary_heap(Distribution *dis,
   double hold_time = ch.measure(queue_size, warmup_cycles, empty_hold_cycles, hold_cycles);
 
   std::cout << "HoldTime:         " << hold_time << std::endl;
+
   std::cout << std::endl;
 }
 
-#define MEASURE_BH(et) measure_binary_heap< \
-  BenchBinaryHeap::et, \
-  BenchBinaryHeap::T<BenchBinaryHeap::et>::PQ, \
-  BenchBinaryHeap::T<BenchBinaryHeap::et>::ACC>( \
-      dis, queue_size, warmup_cycles, \
-      empty_hold_cycles, hold_cycles);
+#define MEASURE(ns, et) measure<et, ns::T<et>::PQ, ns::T<et>::ACC>( \
+      dis, queue_size, warmup_cycles, empty_hold_cycles, hold_cycles);
 
 #define ARG_GET(varname, meth) \
   if (argp < argc) { \
@@ -114,15 +143,36 @@ void run(int argc, char **argv)
 
     if (element_type == "FLOAT")
     {
-      MEASURE_BH(ET_FLOAT);
+      MEASURE(BenchBinaryHeap, ET_FLOAT);
     }
     else if (element_type == "DOUBLE")
     {
-      MEASURE_BH(ET_DOUBLE);
+      MEASURE(BenchBinaryHeap, ET_DOUBLE);
     }
     else if (element_type == "STIMULI")
     {
-      MEASURE_BH(ET_STIMULI);
+      MEASURE(BenchBinaryHeap, ET_STIMULI);
+    }
+    else
+    {
+      throw "invalid element type";
+    }
+  }
+  else if (algorithm == "StlPq")
+  {
+    ARG_GET(element_type, std::string);
+
+    if (element_type == "FLOAT")
+    {
+      MEASURE(BenchStlPq, ET_FLOAT);
+    }
+    else if (element_type == "DOUBLE")
+    {
+      MEASURE(BenchStlPq, ET_DOUBLE);
+    }
+    else if (element_type == "STIMULI")
+    {
+      MEASURE(BenchStlPq, ET_STIMULI);
     }
     else
     {

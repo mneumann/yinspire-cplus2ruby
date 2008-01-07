@@ -33,7 +33,7 @@ class ClassicHold
 
         assert(insert_prob > delete_prob);
 
-        while (@pq->get_size() < queue_size)
+        while (ACC::get_size(@pq) < (unsigned)queue_size)
         {
           if (rnd_bool.next() < insert_prob)
           {

@@ -3,31 +3,6 @@
 
 namespace BenchBinaryHeap
 {
-  struct ET_FLOAT 
-  {
-    float priority;
-
-    static inline bool greater_than(ET_FLOAT &a, ET_FLOAT &b) { return a.priority > b.priority; }
-    static const char* element_type() { return "float"; }
-  };
-
-  struct ET_DOUBLE 
-  {
-    double priority;
-
-    static inline bool greater_than(ET_DOUBLE &a, ET_DOUBLE &b) { return a.priority > b.priority; }
-    static const char* element_type() { return "double"; }
-  };
-
-  struct ET_STIMULI
-  {
-    float priority;
-    float weight;
-
-    static inline bool greater_than(ET_STIMULI &a, ET_STIMULI &b) { return a.priority > b.priority; }
-    static const char* element_type() { return "Stimuli/float"; }
-  };
-
   template<class ET>
   struct T
   {
@@ -35,6 +10,11 @@ namespace BenchBinaryHeap
 
     struct ACC
     {
+      static inline unsigned int get_size(PQ *pq)
+      {
+        return pq->size();
+      }
+
       static inline void hold(PQ *pq, double increment)
       {
         ET e = pq->top();

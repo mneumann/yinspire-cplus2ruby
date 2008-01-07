@@ -758,7 +758,8 @@ class Cplus2Ruby::CodeGenerator
     out << "#{n}::#{n}() {\n"
 
     model_class.properties.each do |prop|
-      if init = @model.lookup_type_entry(:init, prop.options, prop.type)
+      init = @model.lookup_type_entry(:init, prop.options, prop.type)
+      unless init.nil?
         if init.is_a?(String) and init.include?("%s")
           out << init.gsub('%s', "@#{prop.name}")
         else

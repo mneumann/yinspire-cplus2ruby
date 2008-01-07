@@ -14,9 +14,9 @@ class NeuralEntity
       real  weight;
 
       inline static bool
-        greater_than(Stimulus &a, Stimulus &b)
+        less(const Stimulus &a, const Stimulus &b)
         {
-          return (a.at > b.at); 
+          return (a.at < b.at); 
         }
     };
   }
@@ -84,9 +84,9 @@ class NeuralEntity
   #
   # Helper code for method +stimuli_pq_to_a+.
   #
-  method :dump_stimuli, {:s => 'Stimulus&'},{:ary => 'VALUE'}, %{
-    rb_ary_push(ary, rb_float_new(s.at));
-    rb_ary_push(ary, rb_float_new(s.weight));
+  method :dump_stimuli, {:s => 'const Stimulus&'},{:ary => 'void*'}, %{
+    rb_ary_push(*((VALUE*)ary), rb_float_new(s.at));
+    rb_ary_push(*((VALUE*)ary), rb_float_new(s.weight));
   }, :static => true
 
   #
@@ -95,7 +95,7 @@ class NeuralEntity
   #
   method :stimuli_pq_to_a, {:returns => Object}, %{
     VALUE ary = rb_ary_new(); 
-    @stimuli_pq.each<VALUE>(dump_stimuli, ary);
+    @stimuli_pq.each(dump_stimuli, &ary);
     return ary;
   }
 
@@ -248,9 +248,9 @@ class NeuralEntity
   #
   helper_code %{
     static bool
-    stimuli_accum(Stimulus &parent, const Stimulus &element, real tolerance)
+    stimuli_accum(Stimulus &parent, const Stimulus &element, void *tolerance)
     {
-      if ((element.at - parent.at) > tolerance) return false;
+      if ((element.at - parent.at) > *((real*)tolerance)) return false;
 
       if (isinf(element.weight))
       {
@@ -272,7 +272,7 @@ class NeuralEntity
     Stimulus s; s.at = at; s.weight = weight;
     if (@simulator->stimuli_tolerance >= 0.0)
     {
-      if (@stimuli_pq.accumulate<real>(s, stimuli_accum, @simulator->stimuli_tolerance))
+      if (@stimuli_pq.accumulate(s, stimuli_accum, &@simulator->stimuli_tolerance))
       {
         return;
       }
@@ -338,8 +338,8 @@ class NeuralEntity
   #
   # Accessor function for BinaryHeap
   #
-  method :greater_than, {:a => NeuralEntity},{:b => NeuralEntity},{:returns => 'bool'}, %{
-    return (a->schedule_at > b->schedule_at);
+  method :less, {:a => NeuralEntity},{:b => NeuralEntity},{:returns => 'bool'}, %{
+    return (a->schedule_at < b->schedule_at);
   }, :static => true, :inline => true
   
   #

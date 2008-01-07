@@ -2,7 +2,7 @@ require 'time'
 
 COMPILER='g++'
 COMPILER_NAME = `#{COMPILER} --version`.split("\n").first.gsub(/\s/, '_')
-COMPILER_OPTFLAGS = "-O3" 
+COMPILER_OPTFLAGS = "-O3"
 COMPILE_DATE = Time.now.iso8601  
 UNAME = `uname -p -r -s`.split("\n").first.gsub(/\s/, '_')
 

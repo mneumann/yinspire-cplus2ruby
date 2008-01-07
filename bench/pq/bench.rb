@@ -1,7 +1,3 @@
-#WARMUP_CYCLES = 100_000_000 
-#EMPTY_HOLD_CYCLES = 100_000_000 
-#HOLD_CYCLES = 100_000_000 
-
 WARMUP_CYCLES = 10_000_000 
 EMPTY_HOLD_CYCLES = 100_000_000 
 HOLD_CYCLES = 100_000_000 
@@ -17,10 +13,13 @@ DISTRIBUTIONS = [
 ALGORITHMS = [
   'BinaryHeap FLOAT',
   'BinaryHeap DOUBLE',
-  'BinaryHeap STIMULI'
+  'BinaryHeap STIMULI',
+  'StlPq FLOAT',
+  'StlPq DOUBLE',
+  'StlPq STIMULI'
 ]
 
-REPEAT = 5 
+REPEAT = 5
 
 QUEUE_SIZES = (1..7).map {|x| 10**x}
 #QUEUE_SIZES = [1000] #(1..6).map {|x| 10**x}
@@ -28,6 +27,7 @@ QUEUE_SIZES = (1..7).map {|x| 10**x}
 def bench(queue_size, warmup_cycles, empty_hold_cycles, hold_cycles, distribution, algorithm) 
   cmd =  "./bench #{queue_size} #{warmup_cycles} #{empty_hold_cycles} #{hold_cycles}"
   cmd << " #{distribution} #{algorithm}"
+  p cmd
   parse_result(`#{cmd}`)
 end
 
@@ -63,10 +63,13 @@ def bench_algorithm(algorithm, prefix, repeat=nil, distributions=nil, queue_size
 
   plot << %{
     set terminal pdf
+    # dashed
     set output "#{prefix}.pdf"
-    set xlabel "Queue size"
+    set xlabel "Queue size (ld)"
     set ylabel "Mean access time (ns)"
-    set logscale x
+    set format x "%L"
+    set logscale x 2
+    #set logscale y 2
     set grid x y
     set size ratio 1
     set data style linespoints
@@ -94,7 +97,7 @@ def bench_algorithm(algorithm, prefix, repeat=nil, distributions=nil, queue_size
       avg *= 1_000_000_000 # convert to ns
       arr << [qs, avg]
     end
-    arr.sort_by {|qs,_| qs}.each do |qs, avg|
+    arr.sort_by {|qs,_| qs.to_i}.each do |qs, avg|
       dat.print qs.to_s.ljust(11)
       dat.puts avg.to_s.ljust(24)
     end
@@ -111,4 +114,10 @@ def bench_algorithm(algorithm, prefix, repeat=nil, distributions=nil, queue_size
 end 
 
 #bench_algorithm("BinaryHeap STIMULI", "work/a1")
-bench_algorithm("BinaryHeap STIMULI", "work/a2", 1, ["Random"], [100_000, 1_000_000, 10_000_000])
+#bench_algorithm("BinaryHeap STIMULI", "work/a2", 1, ["Random"], [100_000, 1_000_000, 10_000_000])
+Dir.mkdir('work') rescue nil
+
+qs = (14..22).map {|x| 2**x}
+bench_algorithm("BinaryHeap STIMULI", "work/bh", 2, ["Random"], qs)
+bench_algorithm("StlPq STIMULI", "work/stl", 2, ["Random"], qs)
+#bench_algorithm("BinaryHeap STIMULI", "work/test5", 2, ["Random"], [2**18, 2**19, 2**20])

@@ -4,32 +4,42 @@
  * Copyright (c) 2007, 2008 by Michael Neumann (mneumann@ntecs.de)
  *
  * The Indexed Binary Heap keeps track of the indices of it's elements
- * stored in the heap. 
+ * stored in the heap to allow efficient updating of their priorities. 
  *
  * The requirement was to modify an elements priority. In a regular
- * implicit binary heap this is an inefficient operation, as 
- * the element has to be found prior to modifying it's priority. 
- * And finding an element is O(n) in an implicit binary heap. By keeping
- * track of the elements index and storing this value inside the
- * element, the complexity of modifying an elements priority is
+ * implicit binary heap this is an inefficient operation as the element
+ * has to be found prior to modifying it's priority.  And finding an
+ * element is O(n) in an implicit binary heap due to it's non sorted
+ * nature (i.e. can't apply binary search). By keeping track of the
+ * elements index and storing this value inside the elements structure,
+ * the complexity of modifying an elements priority is reduced to 
  * O(log n) in the worst-case! 
  *
  * NOTE: Index 0 of the elements array is unused.  It's the index that
  * should be used to denote that an element is NOT actually present in
  * the binary heap.
  *
+ * See documentation of BinaryHeap as well.
+ *
  * Example:
  *
- *   struct acc {
- *     inline static unsigned int& index(E& e) {
+ *   struct E
+ *   {
+ *     float schedule_at;
+ *     unsigned int schedule_index;
+ *
+ *     inline static bool less(const E& e1, const E& e2)
+ *     {
+ *       return e1.schedule_at < e2.schedule_at;
+ *     }
+ *
+ *     inline static unsigned int& index(const E& e)
+ *     {
  *       return e.schedule_index;
  *     }
- *     inline static bool greater_than(E& e1, E& e2) {
- *       return (e1.schedule_at > e2.schedule_at);
- *     }
- *   }
+ *   };
  *
- *   IndexedBinaryHeap<E, MemoryAllocator, acc> heap;
+ *   IndexedBinaryHeap<E, MemoryAllocator> heap;
  *   ...
  *
  */
@@ -39,56 +49,40 @@
 
 #include "binary_heap.h"
 
-template <class E, class MA, class ACC = E, unsigned int MIN_CAPA=1023> 
-class IndexedBinaryHeap : public BinaryHeap<E, MA, ACC, MIN_CAPA>
+template <typename E, class Acc=E>
+struct BinaryHeapIndexer
+{
+  static inline void index_changed(E& e, unsigned int i) 
+  {
+    Acc::index(e) = i;
+  }
+};
+
+
+template <typename E, class Alloc, class Acc=E, unsigned int MIN_CAPA=1024> 
+class IndexedBinaryHeap : public BinaryHeap<E, Alloc, Acc, BinaryHeapIndexer<E, Acc>, MIN_CAPA>
 {
     typedef unsigned int I; // index type
-    typedef BinaryHeap<E, MA, ACC, MIN_CAPA> super; 
+    typedef BinaryHeap<E, Alloc, Acc, BinaryHeapIndexer<E, Acc>, MIN_CAPA> super;
+    typedef BinaryHeapIndexer<E, Acc> Idx;
 
   public:
 
     void
-      update(E& element)
+      update(const E& element)
       {
-        I index = ACC::index(element); 
-        super::propagate_up(index);
-        super::propagate_down(index);
-      }
-
-    inline void 
-      push_or_update(E& element)
-      {
-        if (ACC::index(element) == 0)
+        I i = Acc::index(element);
+        if (i == 0)
         {
           super::push(element);
         }
         else
         {
-          update(element);
+          // FIXME: use propagate up/down instead
+          Idx::index_changed(@elements[i], 0);  // detach from heap
+          I bubble = super::move_bubble_down(i);
+          super::insert_and_bubble_up(bubble, element); 
         }
-      }
-
-    /*
-     * Remove this element from the heap.
-     */
-    void
-      remove(E& element)
-      {
-        // FIXME
-      }
-
-  protected:
-
-    inline void
-      update_index(I i)
-      {
-        ACC::index(super::element_at(i)) = i;
-      }
-
-    inline void
-      detach_index(I i)
-      {
-        ACC::index(super::element_at(i)) = 0;
       }
 
 };
