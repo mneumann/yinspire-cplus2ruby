@@ -5,11 +5,11 @@
  *
  * Requirements for "ACC": 
  *
- *   struct {
- *     static bool greater_than(T*, T*); 
- *     static T*& next(T*);
- *     static T*& previous(T*);
- *     static T*& child(T*);
+ *   struct ACC {
+ *     inline static bool less(const T*, const T*); 
+ *     inline static T*& next(T*);
+ *     inline static T*& previous(T*);
+ *     inline static T*& child(T*);
  *   }
  *
  */
@@ -25,6 +25,7 @@ class PairingHeap
     PairingHeap()
     {
       @root = NULL;
+      @size_ = 0;
     }
 
     bool
@@ -33,13 +34,19 @@ class PairingHeap
         return (@root == NULL);
       }
 
+    unsigned int
+      size() const
+      {
+        return @size_;
+      }
+
     T*
       top() const
       {
         return @root;
       }
 
-    T*
+    void
       pop()
       {
         T* current;
@@ -47,7 +54,7 @@ class PairingHeap
         T* r1;
         T* r2;
 
-        T* return_node = @root;
+        --@size_;
 
         if (ACC::child(@root) != NULL)
         {
@@ -107,8 +114,6 @@ class PairingHeap
         {
           @root = NULL;
         }
-
-        return return_node;
       }
 
     /*
@@ -121,6 +126,8 @@ class PairingHeap
         ACC::previous(node) = NULL; // == NULL means it's a root node
         ACC::child(node) = NULL;
 
+        ++@size_;
+
         @root = empty() ? node : meld(@root, node);
       }
 
@@ -132,7 +139,7 @@ class PairingHeap
     T*
       meld(T* root1, T* root2)
       {
-        if (ACC::greater_than(root1, root2))
+        if (ACC::less(root2, root1))
         {
           T* tmp = root1;
           root1 = root2;
@@ -155,6 +162,7 @@ class PairingHeap
   private:
 
     T* root;
+    unsigned int size_;
 
 };
 
