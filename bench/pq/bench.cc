@@ -34,7 +34,32 @@ struct ET_STIMULI
   static inline bool less(const ET_STIMULI &a, const ET_STIMULI &b) { return (a.priority < b.priority); }
 };
 
+/*
+ * Pairing heap needs additional fields
+ */
+struct ET_STIMULI_PH
+{
+  float priority;
+  float weight;
+
+  ET_STIMULI_PH *_next;
+  ET_STIMULI_PH *_previous;
+  ET_STIMULI_PH *_child;
+
+  inline static bool less(const ET_STIMULI_PH* e1, const ET_STIMULI_PH* e2)
+  {
+    return e1->priority < e2->priority;
+  }
+
+  inline static ET_STIMULI_PH*& next(ET_STIMULI_PH* e) { return e->_next; }
+  inline static ET_STIMULI_PH*& previous(ET_STIMULI_PH* e) { return e->_previous; }
+  inline static ET_STIMULI_PH*& child(ET_STIMULI_PH* e) { return e->_child; }
+
+  static const char* element_type() { return "Stimuli/float/PairingHeap"; }
+};
+
 #include "bench_binaryheap.h"
+#include "bench_pairingheap.h"
 #include "bench_stlpq.h"
 
 enum {
@@ -167,6 +192,19 @@ void run(int argc, char **argv)
     ARG_GET(negtriangular_b, atof);
     dis = new NegativeTriangularDistribution(negtriangular_a, negtriangular_b);
   }
+  else if (distribution == "Bimodal")
+  {
+    double bimodal_a, bimodal_b;
+    ARG_GET(bimodal_a, atof);
+    ARG_GET(bimodal_b, atof);
+    dis = new BimodalDistribution(bimodal_a, bimodal_b);
+  }
+  else if (distribution == "Pareto")
+  {
+    double pareto_a;
+    ARG_GET(pareto_a, atof);
+    dis = new ParetoDistribution(pareto_a);
+  }
   else
   {
     throw "invalid distribution";
@@ -210,6 +248,15 @@ void run(int argc, char **argv)
     else if (element_type == "STIMULI")
     {
       MEASURE(BenchStlPq, ET_STIMULI);
+    }
+  }
+  else if (algorithm == "PairingHeap")
+  {
+    ARG_GET(element_type, std::string);
+
+    if (element_type == "STIMULI")
+    {
+      MEASURE(BenchPairingHeap, ET_STIMULI_PH);
     }
     else
     {

@@ -187,7 +187,7 @@ class NeuralEntity
       @schedule_at = at;
       @simulator->schedule_update(this);
     }
-  }
+  }, :inline => true
 
   # 
   # Returns +true+ if stepped scheduling is enabled, +false+ otherwise.
@@ -243,40 +243,23 @@ class NeuralEntity
     }
   }
 
-  #
-  # Accumulation function
-  #
-  helper_code %{
-    static bool
-    stimuli_accum(Stimulus &parent, const Stimulus &element, void *tolerance)
-    {
-      if ((element.at - parent.at) > *((real*)tolerance)) return false;
-
-      if (isinf(element.weight))
-      {
-         /* 
-          * We only accumulate two infinitive values!
-          */
-         return (isinf(parent.weight) ? true : false);
-      }
-
-      parent.weight += element.weight;
-      return true;
-    }
-  }
-
   # 
   # Add a Stimuli to the local priority queue.
   #
   method :stimuli_add, {:at => 'simtime'},{:weight => 'real'}, %{
     Stimulus s; s.at = at; s.weight = weight;
+
     if (@simulator->stimuli_tolerance >= 0.0)
     {
-      if (@stimuli_pq.accumulate(s, stimuli_accum, &@simulator->stimuli_tolerance))
+      Stimulus *parent = @stimuli_pq.find_parent(s); 
+
+      if (parent != NULL && (s.at - parent->at) <= @simulator->stimuli_tolerance)
       {
+        parent->weight += s.weight;
         return;
       }
     }
+    
     @stimuli_pq.push(s);
     schedule(@stimuli_pq.top().at);
   }

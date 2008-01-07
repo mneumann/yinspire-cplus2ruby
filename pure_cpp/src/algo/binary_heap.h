@@ -3,20 +3,26 @@
  *
  * Copyright (c) 2007, 2008 by Michael Neumann (mneumann@ntecs.de)
  *
- *   E: Element type
- *   MA: Memory Allocator
- *   ACC: Accessor structure
- *   MIN_CAPACITY: minimum number of elements 
+ * NOTE: We start counting from 1 in the elements array!
+ *
+ * Template parameters:
+ *
+ *   E:        Element type
+ *   Alloc:    Allocator
+ *   Acc:      Accessor struct. Defines ordering relation (less).
+ *   MIN_CAPA: minimum number of elements
  *
  * Example:
  *
- *   struct acc {
- *     inline static bool bh_cmp_gt(int& i1, int& i2) {
- *       return (i1 > i2);
+ *   struct Acc
+ *   {
+ *     static inline bool less(const int& a, const int& b)
+ *     {
+ *       return a < b;
  *     }
- *   }
+ *   };
  *
- *   BinaryHeap<int, MemoryAllocator, acc> heap;
+ *   BinaryHeap<int, MemoryAllocator, Acc> heap;
  *   heap.push(4);
  *   heap.pop();
  *   ...
@@ -27,51 +33,42 @@
 #define __YINSPIRE__BINARY_HEAP__
 
 #include <assert.h>
-#include <string>
 
-template <class E, class MA, class ACC = E, int MIN_CAPACITY=1023>
+/*
+ * This is used to be able to keep track of
+ * an elements index in the IndexedBinaryHeap subclass.
+ * Unused in this class.
+ */
+template <typename E>
+struct BinaryHeapDummyIndexer
+{
+  static inline void index_changed(E& e, unsigned int i) 
+  {
+    /* DUMMY */
+  }
+};
+
+template <typename E, class Alloc, class Acc=E, class Idx=BinaryHeapDummyIndexer<E>, unsigned int MIN_CAPA=1024>
 class BinaryHeap
 {
-  typedef unsigned int I;
+    typedef unsigned int I; // index type
 
   public:
 
       BinaryHeap()
       {
         @capacity = 0;
-        @size = 0;
+        @size_ = 0;
         @elements = NULL; // we do lazy allocation!
       }
 
       ~BinaryHeap()
       {
-        MA::free(@elements);
-        @elements = NULL;
-      }
-
-    void
-      push(const E& element)
-      {
-        @size += 1;
-        if (@size > @capacity) resize();
-        assert(@size <= @capacity);
-        @elements[@size] = element;
-        update_index(@size);
-        propagate_up(@size);
-      }
-
-    void
-      pop()
-      {
-        assert(@size > 0); 
-        detach_index(1);
-        @elements[1] = @elements[@size];
-        @size -= 1;
-        if (@size > 0)
+        if (@elements != NULL)
         {
-          update_index(1);
-          propagate_down(1);
+          Alloc::free(@elements+1);
         }
+        @elements = NULL;
       }
 
     inline E&
@@ -81,68 +78,73 @@ class BinaryHeap
         return @elements[1];  
       }
 
-    bool
-      try_pop()
+    void
+      pop()
       {
-        if (empty()) return false;
-        pop();
-        return true;
+        remove(1);
       }
 
-    bool
-      try_pop(E& element)
+    inline void
+      remove(I i)
       {
-        if (empty()) return false;
-        element = top();
-        pop();
-        return true;
+        assert(i <= @size_);
+
+        // 
+        // Element i is removed from the heap and as such becomes
+        // a "bubble" (free element). Move the bubble until
+        // the bubble becomes a leaf element. 
+        //
+        Idx::index_changed(@elements[i], 0);  // detach from heap
+        I bubble = move_bubble_down(i);
+
+        //
+        // Now take the last element and insert it at the position of
+        // the bubble. In case the bubble is already the last element we
+        // are done.
+        //
+        if (bubble != @size_)
+        {
+          insert_and_bubble_up(bubble, @elements[@size_]);
+        }
+        --@size_;
+      }
+
+    void
+      push(const E& element)
+      {
+        if (@size_ >= @capacity) resize(2*@capacity);
+        insert_and_bubble_up(++@size_, element);
       }
 
     inline I
-      get_size() const
+      size() const
       {
-        return @size;
+        return @size_;
       }
 
     inline bool
       empty() const
       {
-        return (@size == 0);
+        return (@size_ == 0);
       }
 
-    inline bool
-      is_empty() const
+    /*
+     * A return value of +false+ means that the element wasn't accumulated with
+     * another element and as such has to be inserted into the heap.
+     */
+    bool
+      accumulate(const E& element, bool (*accum)(E&,const E&,void*), void *data)
       {
-        return (@size == 0);
-      }
+        I i;
 
-    inline bool
-      is_full() const
-      {
-        return (@size >= @capacity); 
-      }
+        //
+        // Find the position of the first element that is less than +element+.
+        // 
+        for (i = @size_; i != 0 && Acc::less(element, @elements[i]); i /= 2);
 
-    template <typename DATA> bool
-      accumulate(E& element, bool (*accumulator)(E&,const E&,DATA), DATA data)
-      {
+        assert(i == 0 || Acc::less(@elements[i], element)); 
 
-        /*
-         * Find the position of the first element that is not greater than
-         * +element+.
-         */ 
-        I index = @size; 
-        while (index > 0 && ACC::bh_cmp_gt(element_at(index), element))
-        {
-          index /= 2;
-        }
-
-        /*
-         * index now points to the element that is greater than
-         * +element+ (or the non-existing element in case of @size==0).
-         */
-        assert(index == 0 || !ACC::bh_cmp_gt(element_at(index), element)); 
-
-        if (index == 0 || !accumulator(@elements[index], element, data))
+        if (i == 0 || !accum(@elements[i], element, data))
         {
           return false;
         }
@@ -152,137 +154,124 @@ class BinaryHeap
     /*
      * Iterate over all elements (non-destructive)
      */
-    template <typename DATA> void
-      each(void (*yield)(E&, DATA), DATA data)
+    void
+      each(void (*yield)(const E&, void*), void *data)
       {
-        for (I i=1; i <= @size; i++)
+        for (I i=1; i <= @size_; i++)
         {
           yield(@elements[i], data);
         }
       }
-
-    /*
-     * Remove all elements from the pq.
-     */
-    void
-      clear()
-      {
-        for (I i=1; i <= @size; i++)
-        {
-          detach_index(i);
-        }
-        @size = 0;
-      }
-
+ 
   protected:
 
+    /*
+     * Insert +element+ into the heap beginning from
+     * +i+ and searching upwards to the root for the 
+     * right position (heap ordered) to insert.
+     *
+     * Element at index +i+ MUST be empty, i.e. unused!
+     */
     inline void
-      swap_elements(I i1, I i2)
+      insert_and_bubble_up(I i, const E& element)
       {
-        @elements[0] = @elements[i1];
-        @elements[i1] = @elements[i2];
-        @elements[i2] = @elements[0];
-
-        update_index(i1);
-        update_index(i2);
-      }
-
-    inline E&
-      element_at(I index) const
-      {
-        return @elements[index];
-      }
-
-    inline void
-      propagate_down(I index)
-      {
-        I i2;
-
-        while (index*2+1 <= @size)
+        for (;i >= 2 && Acc::less(element, @elements[i/2]); i /= 2)
         {
-          i2 = index*2 + (cmp_gt(index*2, index*2+1) ? 1 : 0);
+          store_element(i, @elements[i/2]);
+        }
 
-          if (cmp_gt(index, i2))
+        // finally store it into the determined hole
+        store_element(i, element);
+      }
+
+    /*
+     * Move the bubble (empty element) at +i+ down in direction
+     * to the leaves. When the bubble reaches a leaf, stop and
+     * return the index of the leaf element which is now empty.
+     */
+    inline I 
+      move_bubble_down(I i)
+      {
+        const I sz = @size_;
+        I right_child = i * 2 + 1;
+
+        while (right_child <= sz) 
+        {
+          if (Acc::less(@elements[right_child-1], @elements[right_child]))
           {
-            swap_elements(index, i2);
-            index = i2;
+            --right_child; // minimum child is left child
           }
-          else
-          {
-            break;
-          }
+
+          store_element(i, @elements[right_child]);
+          i = right_child;
+          right_child = i * 2 + 1;
         }
 
-        /*
-         * edge case
-         */ 
-        if (index*2 == @size && cmp_gt(index, index*2))
+        //
+        // Edge case (comparison with the last element)
+        //
+        if (right_child-1 == sz)
         {
-          swap_elements(index, index*2);
+          store_element(i, @elements[right_child-1]);
+          i = right_child-1;
         }
+
+        return i;
       }
 
-    inline void
-      propagate_up(I index)
-      {
-        while (index > 1 && cmp_gt(index/2, index))
-        {
-          swap_elements(index/2, index);
-          index /= 2;
-        }
-      }
-
-    inline void
-      resize()
-      {
-        resize(2*@capacity+1);
-      }
-
-    inline void
+    /*
+     * The 0'th element is never used (accessed), so 
+     * we allocate only "capacity" elements (instead of capacity+1)
+     * and move the pointer one element before the begin of the 
+     * allocated memory. 
+     */
+    void
       resize(I new_capacity)
       {
-        if (new_capacity < MIN_CAPACITY) new_capacity = MIN_CAPACITY;  // minimum capacity!
-        @capacity = new_capacity; 
+        E *new_elements;
 
-        /* 
-         * We do lazy allocation!
-         */
+        if (new_capacity < MIN_CAPA) @capacity = MIN_CAPA;  
+        else @capacity = new_capacity;
+
+        //
+        // We do lazy allocation!
+        //
         if (@elements != NULL)
         {
-          @elements = MA::realloc_n(@elements, @capacity+1);
+          new_elements = Alloc::realloc_n(@elements+1, @capacity);
         }
         else
         {
-          @elements = MA::alloc_n(@capacity+1);
+          new_elements = Alloc::alloc_n(@capacity);
         }
-        assert(@elements != NULL);
+
+        assert(new_elements != NULL);
         assert(@capacity >= @size);
+
+        //
+        // move pointer so that we "introduce" a zero'th 
+        // element.
+        //
+        @elements = new_elements-1;
       }
 
-    inline bool
-      cmp_gt(I i1, I i2) const
-      {
-        return (ACC::bh_cmp_gt(element_at(i1), element_at(i2)));
-      }
-
+    /*
+     * FIXME: cannot overwrite method in a subclass 
+     * The only purpose of this method is that we overwrite it in the
+     * subclass IndexedBinaryHeap to keep track of an elements index.
+     */
     inline void
-      update_index(I index)
+      store_element(I i, const E& element)
       {
-        /* DUMMY */
-      }
-
-    inline void
-      detach_index(I index)
-      {
-        /* DUMMY */
+        @elements[i] = element;
+        Idx::index_changed(@elements[i], i); 
       }
 
   protected:
 
+    I  size_;
+    E *elements;
     I  capacity;
-    I  size;
-    E* elements;
-
 };
 
 #endif

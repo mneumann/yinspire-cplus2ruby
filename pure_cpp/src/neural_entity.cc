@@ -104,9 +104,9 @@ NeuralEntity::schedule_disable_stepping()
 }
 
 static bool
-stimuli_accum(Stimulus &parent, const Stimulus &element, real tolerance)
+stimuli_accum(Stimulus &parent, const Stimulus &element, void *tolerance)
 {
-  if ((element.at - parent.at) > tolerance) return false;
+  if ((element.at - parent.at) > *((real*)tolerance)) return false;
 
   if (isinf(element.weight))
   {
@@ -126,7 +126,8 @@ NeuralEntity::stimuli_add(simtime at, real weight)
   Stimulus s; s.at = at; s.weight = weight;
   if (@simulator->stimuli_tolerance >= 0.0)
   {
-    if (@stimuli_pq.accumulate<real>(s, stimuli_accum, @simulator->stimuli_tolerance)) return;
+    //find_parent
+    if (@stimuli_pq.accumulate(s, stimuli_accum, &@simulator->stimuli_tolerance)) return;
   }
   @stimuli_pq.push(s);
   schedule(@stimuli_pq.top().at);

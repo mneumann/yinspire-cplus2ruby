@@ -18,9 +18,9 @@ struct Stimulus
   real weight;
 
   inline static bool
-    bh_cmp_gt(Stimulus &a, Stimulus &b)
+    less(const Stimulus &a, const Stimulus &b)
     {
-      return (a.at > b.at); 
+      return (a.at < b.at); 
     }
 };
 
@@ -224,16 +224,16 @@ class NeuralEntity
      * Accessor function for BinaryHeap
      */
     inline static bool
-      bh_cmp_gt(NeuralEntity *a, NeuralEntity *b)
+      less(const NeuralEntity *a, const NeuralEntity *b) 
       {
-        return (a->schedule_at > b->schedule_at);
+        return (a->schedule_at < b->schedule_at);
       }
 
     /*
      * Accessor function for BinaryHeap
      */
     inline static uint &
-      bh_index(NeuralEntity *self)
+      index(NeuralEntity *self)
       {
         return self->schedule_index;
       }

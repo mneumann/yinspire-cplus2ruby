@@ -127,13 +127,12 @@ class BinaryHeap
       {
         return (@size_ == 0);
       }
-
+    
     /*
-     * A return value of +false+ means that the element wasn't accumulated with
-     * another element and as such has to be inserted into the heap.
+     * Returns NULL or a pointer to the parent of +element+.
      */
-    bool
-      accumulate(const E& element, bool (*accum)(E&,const E&,void*), void *data)
+    E*
+      find_parent(const E& element)
       {
         I i;
 
@@ -142,13 +141,7 @@ class BinaryHeap
         // 
         for (i = @size_; i != 0 && Acc::less(element, @elements[i]); i /= 2);
 
-        assert(i == 0 || Acc::less(@elements[i], element)); 
-
-        if (i == 0 || !accum(@elements[i], element, data))
-        {
-          return false;
-        }
-        return true;
+        return (i == 0 ? NULL : &@elements[i]); 
       }
 
     /*

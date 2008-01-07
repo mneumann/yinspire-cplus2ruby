@@ -9,7 +9,7 @@
  * memory.
  */
 template <typename T> 
-class RubyMemoryAllocator
+class MemoryAllocator
 {
   public:
 

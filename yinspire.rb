@@ -11,7 +11,7 @@ Cplus2Ruby << %{
   #include <math.h>
   #include "algo/binary_heap.h"
   #include "algo/indexed_binary_heap.h"
-  #include "memory_allocator.h"
+  #include "ruby_memory_allocator.h"
 
   #define real_exp expf
   #define real_fabs fabsf

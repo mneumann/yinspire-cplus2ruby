@@ -69,3 +69,25 @@ struct NegativeTriangularDistribution : public Distribution
   virtual double next() { return (a + (b-a)*(1.0 - sqrt(1.0 - gen()))); }
   virtual void output_name(std::ostream &o) { o << "NegativeTriangular(" << @a << "," << @b << ")"; } 
 };
+
+struct BimodalDistribution : public Distribution
+{
+  double a, b;
+
+  BimodalDistribution(double _a=9.95238, double _b=0.1) : a(_a), b(_b) {} 
+
+  virtual double next() { return a * gen() + (gen() < b ? a : 0); }
+    
+  virtual void output_name(std::ostream &o) { o << "Bimodal(" << @a << "," << @b << ")"; } 
+};
+
+struct ParetoDistribution : public Distribution
+{
+  double a;
+
+  ParetoDistribution(double _a) : a(_a) {} 
+
+  virtual double next() { return pow(1.0/(1.0 - gen()), 1.0 / a); }
+    
+  virtual void output_name(std::ostream &o) { o << "Pareto(" << @a << ")"; } 
+};

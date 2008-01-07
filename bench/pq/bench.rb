@@ -114,6 +114,8 @@ end
 Dir.mkdir('work') rescue nil
 
 qs = (14..22).map {|x| 2**x}
-bench_algorithm("BinaryHeap STIMULI", "work/bh", 2, ["Random"], qs)
-bench_algorithm("StlPq STIMULI", "work/stl", 2, ["Random"], qs)
+#bench_algorithm("BinaryHeap STIMULI", "work/bh", 2, ["Random"], qs)
+#bench_algorithm("StlPq STIMULI", "work/stl", 2, ["Random"], qs)
 #bench_algorithm("BinaryHeap STIMULI", "work/test5", 2, ["Random"], [2**18, 2**19, 2**20])
+bench_algorithm("PairingHeap STIMULI", "work/pairing", 1, ["Random"], [2**10, 2**14, 2**18])
+bench_algorithm("BinaryHeap STIMULI", "work/binary", 1, ["Random"], [2**10, 2**14, 2**18])

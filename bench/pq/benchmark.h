@@ -77,11 +77,11 @@ class Benchmark
         {
           for (j=0; j<max_queue_size; j++)
           {
-            ACC::push(@pq, distribution->next());
+            @acc.push(@pq, distribution->next());
           }
           for (j=0; j<max_queue_size; j++)
           {
-            @pq->pop();
+            @acc.pop(@pq);
           }
         }
       }
@@ -119,12 +119,12 @@ class Benchmark
         {
           if (rnd_bool.next() < insert_prob)
           {
-            ACC::push(@pq, rnd_real.next());
+            @acc.push(@pq, rnd_real.next());
           }
 
           if (!@pq->empty() && rnd_bool.next() < delete_prob)
           {
-            @pq->pop();
+            @acc.pop(@pq);
           }
         }
       }
@@ -168,7 +168,7 @@ class Benchmark
     inline void
       hold()
       {
-        ACC::hold(@pq, distribution->next()); 
+        @acc.hold(@pq, distribution->next()); 
       }
 
     /*
@@ -187,5 +187,6 @@ class Benchmark
 
     PQ *pq;
     Distribution *distribution;
+    ACC acc;
 
 };

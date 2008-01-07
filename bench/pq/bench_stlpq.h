@@ -1,12 +1,12 @@
-#include "algo/binary_heap.h"
-#include "memory_allocator.h"
+#include <vector>
+#include <queue>
 
-namespace BenchBinaryHeap
+namespace BenchStlPq
 {
   template<class ET>
   struct T
   {
-    typedef BinaryHeap<ET, MemoryAllocator<ET> > PQ;
+    typedef std::priority_queue<ET, std::vector<ET>, ET> PQ; 
 
     struct ACC
     {
@@ -32,7 +32,7 @@ namespace BenchBinaryHeap
 
       static const char* algorithm_name()
       {
-        return "BinaryHeap";
+        return "std::priority_queue";
       }
     };
   };

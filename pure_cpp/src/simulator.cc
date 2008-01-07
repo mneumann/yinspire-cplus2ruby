@@ -141,7 +141,7 @@ Simulator::run(simtime stop_at)
 void
 Simulator::schedule_update(NeuralEntity *entity)
 {
-  @schedule_pq.push_or_update(entity);
+  @schedule_pq.update(entity);
 }
 
 void
