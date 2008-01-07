@@ -26,14 +26,14 @@ class ClassicHold
      * Setup the priority queue with a size of +queue_size+.
      */ 
     void
-      setup(int queue_size, double insert_prob=0.75, double delete_prob=0.5)
+      setup(unsigned int queue_size, double insert_prob=0.75, double delete_prob=0.5)
       {
         RandomDistribution rnd_bool;
         RandomDistribution rnd_real;
 
         assert(insert_prob > delete_prob);
 
-        while (ACC::get_size(@pq) < (unsigned)queue_size)
+        while (@pq->size() < queue_size)
         {
           if (rnd_bool.next() < insert_prob)
           {

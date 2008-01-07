@@ -10,11 +10,6 @@ namespace BenchBinaryHeap
 
     struct ACC
     {
-      static inline unsigned int get_size(PQ *pq)
-      {
-        return pq->size();
-      }
-
       static inline void hold(PQ *pq, double increment)
       {
         ET e = pq->top();
