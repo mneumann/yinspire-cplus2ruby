@@ -107,7 +107,7 @@ class CalendarQueue
               // remove top element
               @days[i] = ACC::next(top); 
               @current_day = i;
-
+              ACC::next(top) = NULL;
               return top;
             }
             if (priority < min_priority) min_priority = priority;
@@ -132,6 +132,7 @@ class CalendarQueue
 
         top = @days[@current_day];
         @days[@current_day] = ACC::next(top); 
+        ACC::next(top) = NULL;
 
         return top;
       }
@@ -155,16 +156,10 @@ class CalendarQueue
           curr = ACC::next(curr);
         }
 
-        if (prev == NULL)
-        {
-          ACC::next(element) = curr;
-          @days[day] = element;
-        }
-        else
-        {
-          ACC::next(element) = ACC::next(prev); 
-          ACC::next(prev) = element;
-        }
+        ACC::next(element) = curr;
+
+        if (prev != NULL) ACC::next(prev) = element;
+        else              @days[day] = element;
       }
 
     /*
@@ -176,7 +171,6 @@ class CalendarQueue
         E **new_days = new E*[2*@num_days];
 
         const real dw = @day_width / 2.0;
-
         E* c[2];
 
         for (I i = 0; i < @num_days; i++)
@@ -222,17 +216,19 @@ class CalendarQueue
       {
         E **old_days = @days;
         @days = new E*[new_num_days];
+        E *element;
 
         // initialize @days to NULL
         for (I i = 0; i < new_num_days; i++) @days[i] = NULL;
 
         for (I i = 0; i < @num_days; i++)
         {
-          for (E *curr = old_days[i]; curr != NULL; curr = ACC::next(curr))
+          for (E *curr = old_days[i]; curr != NULL; )
           {
-            real priority = ACC::priority(curr);  
-            const I day = (I)(priority / new_day_width) % new_num_days;
-            insert_sorted(day, curr);
+            const I day = ((I)(ACC::priority(curr) / new_day_width)) % new_num_days;
+            element = curr; 
+            curr = ACC::next(curr);
+            insert_sorted(day, element);
           }
         }
 
