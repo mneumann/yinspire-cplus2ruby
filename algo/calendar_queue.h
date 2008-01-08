@@ -25,15 +25,18 @@ class CalendarQueue
 
   public:
 
-    CalendarQueue(real initial_bucket_width=1.0)
+    CalendarQueue(real year_width=1.0)
     {
       @size_ = 0;
-      @buckets = NULL;
-      @num_buckets = 0;
-      @bucket_width = initial_bucket_width;
+      @year_width = year_width;
+      @day_width = year_width;
+
       @current_year = 0;
       @current_day = 0;
-      resize(1, initial_bucket_width);
+
+      @num_days = 1;
+      @days = new E*[1];
+      @days[0] = NULL;
     }
 
     inline I
@@ -55,89 +58,80 @@ class CalendarQueue
 
         assert(priority >= 0.0);
 
-        ++@size_;
+        if (++@size_ > 2*@num_days) resize_double();
 
-        if (@size_ > 2*@num_buckets)
-        {
-          // double number of buckets
-          resize(2*@num_buckets, @bucket_width/2.0);
-        }
+        // map priority to a day
+        I day = ((I)(priority / @day_width)) % @num_days;
 
-        // map priority to a bucket
-        I bucket = ((I)(priority / @bucket_width)) % @num_buckets;
-
-        // and sort element into that bucket
-        insert_sorted(bucket, element);
+        // and sort element into that day
+        insert_sorted(day, element);
 
         //
         // in case that the newly inserted element is smaller than the
-        // currently smallest value we have to change the year and day.
+        // currently smallest value we have to change the current year 
+        // and day.
         //
-        if (priority < (@current_year * @num_buckets + @current_day)*@bucket_width)
+        if (priority < min_start())
         {
-          @current_year = (I)(priority / @bucket_width) / @num_buckets;
-          @current_day = bucket;
+          @current_day  = day;
+          @current_year = (I)(priority / @year_width);
         }
       }
 
+    inline real min_start() const { return day_start() + year_start(); }
+    inline real day_start() const { return @current_day * @day_width; }
+    inline real year_start() const { return @current_year * @year_width; }
+ 
     E*
       pop()
       {
         assert(@size_ > 0);
 
-        --@size_;
-
-        if (@size_ < @num_buckets/2 && @num_buckets > 1)
-        {
-          // half the number of buckets
-          //resize(@num_buckets/2, @bucket_width*2.0);
-        }
+        if (--@size_ < @num_days/2 && @num_days > 1) resize_half();
 
         real priority;
-        real max_value_this_year = (@current_year+1)*@bucket_width*@num_buckets;
+        real min_priority = INFINITY;
+        real max_value_this_year = (@current_year+1)*@year_width;
         E *top;
+        I i;
 
-        for (; @current_day < @num_buckets; @current_day++)
+        for (i = @current_day; i < @num_days; i++)
         {
-          top = @buckets[@current_day];
+          top = @days[i];
           if (top != NULL)
           {
-            real priority = ACC::priority(top);
+            priority = ACC::priority(top);
 
-            // FIXME: < or <= ???
             if (priority < max_value_this_year)
             {
               // remove top element
-              @buckets[@current_day] = ACC::next(top); 
+              @days[i] = ACC::next(top); 
+              @current_day = i;
 
               return top;
             }
+            if (priority < min_priority) min_priority = priority;
           }
         }
 
-        // we couldn't find an element within the current year.
-        // -> find the smallest element and jump to it's year.
-
-        real min_priority = INFINITY;
-        int min_index = -1;
-
-        for (I i = 0; i < @num_buckets; i++)
+        //
+        // continue with the first element up to @current_day
+        //
+        for (i = 0; i < @current_day; i++)
         {
-          top = @buckets[i];
-          if (top != NULL && ACC::priority(top) < min_priority)
+          top = @days[i];
+          if (top != NULL)
           {
-            min_priority = ACC::priority(top);
-            min_index = i;
+            priority = ACC::priority(top);
+            if (priority < min_priority) min_priority = priority;
           }
         }
 
-        assert(min_index >= 0);
+        @current_year = (I)(min_priority / @year_width);
+        @current_day  = (I)(min_priority / @day_width) % @num_days;
 
-        @current_year = ((I)(min_priority / @bucket_width)) / @num_buckets;
-        @current_day = ((I)(min_priority / @bucket_width))  % @num_buckets;
-
-        top = @buckets[min_index];
-        @buckets[min_index] = ACC::next(top); 
+        top = @days[@current_day];
+        @days[@current_day] = ACC::next(top); 
 
         return top;
       }
@@ -145,9 +139,9 @@ class CalendarQueue
   protected:
 
     void
-      insert_sorted(I bucket, E *element)
+      insert_sorted(I day, E *element)
       {
-        E *curr = @buckets[bucket];
+        E *curr = @days[day];
         E *prev = NULL; 
         const real priority = ACC::priority(element);
 
@@ -155,10 +149,8 @@ class CalendarQueue
         // Find the first element that is >= +element+.
         // Insert +element+ *before* that element.
         //
-        while (true)
+        while (curr != NULL && ACC::priority(curr) < priority)
         {
-          if (curr == NULL) break;
-          if (ACC::priority(curr) >= priority) break;
           prev = curr;
           curr = ACC::next(curr);
         }
@@ -166,7 +158,7 @@ class CalendarQueue
         if (prev == NULL)
         {
           ACC::next(element) = curr;
-          @buckets[bucket] = element;
+          @days[day] = element;
         }
         else
         {
@@ -175,45 +167,79 @@ class CalendarQueue
         }
       }
 
-    /* 
-     * TODO: the growing-case can be improved by
-     * always merging two consecutive buckets
-     * into a new one.
-     * 
-     * TODO: enqueue should be faster if done with decreasing priorities, instead
-     * of increasing ones ( O(1) vs. O(n/2) ).
-     *
-     * TODO: during insert above, determine the smallest element. this avoids
-     * rescanning the whole buckets at least twice (the first time to notice
-     * that we couldn't find an item within this year, and the second time to
-     * find the smallest element).
+    /*
+     * Each day is split into two days.
      */
     void
-      resize(I new_num_buckets, real new_bucket_width)
+      resize_double()
       {
-        E **old_buckets = @buckets;
-        @buckets = new E*[new_num_buckets];
+        E **new_days = new E*[2*@num_days];
 
-        // initialize @buckets to NULL
-        for (I i = 0; i < new_num_buckets; i++) @buckets[i] = NULL;
+        const real dw = @day_width / 2.0;
 
-        if (old_buckets != NULL)
+        E* c[2];
+
+        for (I i = 0; i < @num_days; i++)
         {
-          for (I i = 0; i < @num_buckets; i++)
+          c[0] = new_days[i*2]   = NULL;
+          c[1] = new_days[i*2+1] = NULL;
+          for (E *curr = @days[i]; curr != NULL; curr = ACC::next(curr))
           {
-            for (E *curr = old_buckets[i]; curr != NULL; curr = ACC::next(curr))
+            const I day = (I)(ACC::priority(curr) / dw) % 2;
+            if (c[day] != NULL)
             {
-              real priority = ACC::priority(curr);  
-              I bucket = (I)(priority / new_bucket_width) % new_num_buckets;
-              insert_sorted(bucket, curr);
+              ACC::next(c[day]) = curr; 
             }
+            else
+            {
+              new_days[i*2+day] = curr; 
+            }
+            c[day] = curr;
           }
 
-          delete[] old_buckets;
+          if (c[0] != NULL) ACC::next(c[0]) = NULL;
+          if (c[1] != NULL) ACC::next(c[1]) = NULL;
         }
 
-        @num_buckets = new_num_buckets;
-        @bucket_width = new_bucket_width;
+        delete [] @days;
+
+        @days = new_days;
+        @num_days *= 2;
+        @day_width /= 2.0;
+        @current_year = 0;
+        @current_day = 0;
+      }
+
+    // TODO: merge
+    void
+      resize_half()
+      {
+        resize(@num_days/2, @day_width*2.0);
+      }
+
+    void
+      resize(I new_num_days, real new_day_width)
+      {
+        E **old_days = @days;
+        @days = new E*[new_num_days];
+
+        // initialize @days to NULL
+        for (I i = 0; i < new_num_days; i++) @days[i] = NULL;
+
+        for (I i = 0; i < @num_days; i++)
+        {
+          for (E *curr = old_days[i]; curr != NULL; curr = ACC::next(curr))
+          {
+            real priority = ACC::priority(curr);  
+            const I day = (I)(priority / new_day_width) % new_num_days;
+            insert_sorted(day, curr);
+          }
+        }
+
+        delete[] old_days;
+
+        @num_days = new_num_days;
+        @day_width = new_day_width;
         @current_year = 0;
         @current_day = 0;
       }
@@ -221,9 +247,12 @@ class CalendarQueue
   private:
 
     I size_;
-    I num_buckets;
-    real bucket_width;
-    E** buckets;
+
+    I num_days;
+    E** days;
+
+    real day_width;
+    real year_width;
 
     I current_year;
     I current_day;
