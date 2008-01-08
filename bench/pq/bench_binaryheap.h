@@ -30,6 +30,13 @@ namespace BenchBinaryHeap
         pq->pop();
       }
 
+      inline double pop_return_priority(PQ *pq)
+      {
+        ET e = pq->top();
+        pq->pop();
+        return e.priority;
+      }
+
       static const char* algorithm_name()
       {
         return "BinaryHeap";

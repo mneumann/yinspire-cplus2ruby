@@ -43,6 +43,15 @@ namespace BenchPairingHeap
         pq->pop();
       }
 
+      inline double pop_return_priority(PQ *pq)
+      {
+        ET *e = pq->top();
+        double res = e->priority; 
+        pq->pop();
+        @freelist->free(e);
+        return res;
+      }
+
       static const char* algorithm_name()
       {
         return "PairingHeap";

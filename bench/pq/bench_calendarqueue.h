@@ -41,6 +41,14 @@ namespace BenchCalendarQueue
         @freelist->free(pq->pop());
       }
 
+      inline double pop_return_priority(PQ *pq)
+      {
+        ET *e = pq->pop();
+        double res = e->_priority; 
+        @freelist->free(e);
+        return res;
+      }
+
       static const char* algorithm_name()
       {
         return "CalendarQueue";

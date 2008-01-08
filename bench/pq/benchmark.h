@@ -30,7 +30,11 @@ class Benchmark
       {
         clock_t t1, t2;
 
-        run_updown(max_queue_size, warmup_cycles); // warmup
+        // warmup & validation
+        if (!run_updown_validate(max_queue_size, warmup_cycles))
+        {
+          throw "pq validation failed";
+        }
 
         t1 = clock();
         run_empty_updown(max_queue_size, empty_updown_cycles);
@@ -85,6 +89,35 @@ class Benchmark
           }
         }
       }
+
+    /*
+     * We assume a "<" relation.
+     */
+    bool
+      run_updown_validate(unsigned int max_queue_size, unsigned int cycles)
+      {
+        unsigned int i, j;
+        double last, prio;
+
+        for (i=0; i<cycles; i++)
+        {
+          for (j=0; j<max_queue_size; j++)
+          {
+            @acc.push(@pq, distribution->next());
+          }
+          last = -INFINITY;
+          for (j=0; j<max_queue_size; j++)
+          {
+            prio = @acc.pop_return_priority(@pq);
+            if (prio < last) return false;
+            last = prio;
+          }
+        }
+
+        return true;
+      }
+
+
 
     void
       run_empty_updown(unsigned int max_queue_size, unsigned int cycles)
