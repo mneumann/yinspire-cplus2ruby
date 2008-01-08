@@ -9,6 +9,9 @@ class Neuron < NeuralEntity
   property :first_pre_synapse, Synapse
   property :first_post_synapse, Synapse
 
+  # TODO: last_pre_synapse/last_post_synapse. enables
+  # correct order of connecting!
+
   #
   # Duration of the absolute refraction period.
   #

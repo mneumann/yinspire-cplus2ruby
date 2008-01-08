@@ -1,12 +1,12 @@
-#include "algo/pairing_heap.h"
+#include "algo/calendar_queue.h"
 #include "chunked_freelist_allocator.h"
 
-namespace BenchPairingHeap
+namespace BenchCalendarQueue
 {
   template<class ET>
   struct T
   {
-    typedef PairingHeap<ET> PQ;
+    typedef CalendarQueue<ET> PQ;
 
     struct ACC
     {
@@ -24,28 +24,26 @@ namespace BenchPairingHeap
 
       inline void hold(PQ *pq, double increment)
       {
-        ET *e = pq->top();
-        e->priority += increment;
-        pq->pop();
+        ET *e = pq->pop();
+        e->_priority += increment;
         pq->push(e);
       }
 
       inline void push(PQ *pq, double priority)
       {
         ET *e = @freelist->allocate();
-        e->priority = priority;
+        e->_priority = priority;
         pq->push(e);
       }
 
       inline void pop(PQ *pq)
       {
-        @freelist->free(pq->top());
-        pq->pop();
+        @freelist->free(pq->pop());
       }
 
       static const char* algorithm_name()
       {
-        return "PairingHeap";
+        return "CalendarQueue";
       }
     };
   };

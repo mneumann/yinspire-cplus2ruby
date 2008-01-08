@@ -58,8 +58,29 @@ struct ET_STIMULI_PH
   static const char* element_type() { return "Stimuli/float/PairingHeap"; }
 };
 
+/*
+ * Calendar queue needs an additional "next" field.
+ */
+struct ET_STIMULI_CQ
+{
+  float _priority;
+  float weight;
+
+  ET_STIMULI_CQ *_next;
+
+  inline static float priority(const ET_STIMULI_CQ* e)
+  {
+    return e->_priority;
+  }
+
+  inline static ET_STIMULI_CQ*& next(ET_STIMULI_CQ* e) { return e->_next; }
+
+  static const char* element_type() { return "Stimuli/float/CalendarQueue"; }
+};
+
 #include "bench_binaryheap.h"
 #include "bench_pairingheap.h"
+#include "bench_calendarqueue.h"
 #include "bench_stlpq.h"
 
 enum {
@@ -257,6 +278,19 @@ void run(int argc, char **argv)
     if (element_type == "STIMULI")
     {
       MEASURE(BenchPairingHeap, ET_STIMULI_PH);
+    }
+    else
+    {
+      throw "invalid element type";
+    }
+  }
+  else if (algorithm == "CalendarQueue")
+  {
+    ARG_GET(element_type, std::string);
+
+    if (element_type == "STIMULI")
+    {
+      MEASURE(BenchCalendarQueue, ET_STIMULI_CQ);
     }
     else
     {

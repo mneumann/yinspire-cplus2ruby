@@ -60,7 +60,7 @@ class NeuralEntity
   # and as it's quite low overhead (12 bytes).
   #
   property :stimuli_pq, 'BinaryHeap<Stimulus, MemoryAllocator<Stimulus> >'
-    
+
   #
   # If stepped scheduling is used, these two properties reference the
   # previous/next entity in the stepped-scheduling list.
@@ -219,7 +219,7 @@ class NeuralEntity
       }
     }
   }
-    
+
   #
   # Disables stepped scheduling.
   #
@@ -251,7 +251,7 @@ class NeuralEntity
 
     if (@simulator->stimuli_tolerance >= 0.0)
     {
-      Stimulus *parent = @stimuli_pq.find_parent(s); 
+      Stimulus *parent = @stimuli_pq.find_parent(s);
 
       if (parent != NULL && (s.at - parent->at) <= @simulator->stimuli_tolerance)
       {
