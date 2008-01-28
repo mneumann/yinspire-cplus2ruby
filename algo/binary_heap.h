@@ -248,11 +248,6 @@ class BinaryHeap
         @elements = new_elements-1;
       }
 
-    /*
-     * FIXME: cannot overwrite method in a subclass 
-     * The only purpose of this method is that we overwrite it in the
-     * subclass IndexedBinaryHeap to keep track of an elements index.
-     */
     inline void
       store_element(I i, const E& element)
       {
