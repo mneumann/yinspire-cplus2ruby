@@ -45,16 +45,12 @@ class Synapse < NeuralEntity
   # O(1)
   #
   def connect(target)
-    raise "target must be Neuron" unless target.kind_of?(Neuron)
-    raise "Synapse already connected" if self.post_neuron || self.next_pre_synapse
-
-    self.next_pre_synapse = target.first_pre_synapse
-    target.first_pre_synapse = self
-    self.post_neuron = target
+    target.add_pre_synapse(self)
   end
 
   #
   # O(n)
+  # FIXME
   #
   def disconnect(target)
     raise "target must be Neuron" unless target.kind_of?(Neuron)

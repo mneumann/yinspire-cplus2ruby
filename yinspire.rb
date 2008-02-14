@@ -24,6 +24,10 @@ Cplus2Ruby << %{
   #define Infinity INFINITY
 }
 
+def assert(cond)
+  raise "assertion failed" unless cond
+end
+
 class Simulator; include Cplus2Ruby end
 class NeuralEntity; include Cplus2Ruby end
 
