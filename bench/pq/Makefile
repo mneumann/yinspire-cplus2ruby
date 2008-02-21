@@ -2,4 +2,4 @@ build:
 	ruby make.rb
 
 clean:
-	rm -f bench
+	rm -rf bench work
