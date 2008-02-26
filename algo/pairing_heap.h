@@ -24,26 +24,26 @@ class PairingHeap
 
     PairingHeap()
     {
-      @root = NULL;
-      @size_ = 0;
+      this->root = NULL;
+      this->size_ = 0;
     }
 
     bool
       empty() const
       {
-        return (@root == NULL);
+        return (this->root == NULL);
       }
 
     unsigned int
       size() const
       {
-        return @size_;
+        return this->size_;
       }
 
     T*
       top() const
       {
-        return @root;
+        return this->root;
       }
 
     void
@@ -54,14 +54,14 @@ class PairingHeap
         T* r1;
         T* r2;
 
-        --@size_;
+        --this->size_;
 
-        if (ACC::child(@root) != NULL)
+        if (ACC::child(this->root) != NULL)
         {
           // remove parent pointer from left-most child node
-          ACC::previous(ACC::child(@root)) = NULL;
+          ACC::previous(ACC::child(this->root)) = NULL;
 
-          current = ACC::child(@root);
+          current = ACC::child(this->root);
           last = NULL;
 
           // left-to-right pass
@@ -92,12 +92,12 @@ class PairingHeap
             }
           }
 
-          @root = last;
+          this->root = last;
           current = ACC::previous(last);
 
           // make it a clean root-node
-          ACC::next(@root) = NULL;
-          ACC::previous(@root) = NULL;	
+          ACC::next(this->root) = NULL;
+          ACC::previous(this->root) = NULL;	
 
           // right-to-left pass 
           while (current != NULL)
@@ -107,12 +107,12 @@ class PairingHeap
             current = ACC::previous(r2);
             ACC::previous(r2) = NULL; // make it a clean root-node
 
-            @root = meld(@root, r2);
+            this->root = meld(this->root, r2);
           }
         }
         else
         {
-          @root = NULL;
+          this->root = NULL;
         }
       }
 
@@ -126,9 +126,9 @@ class PairingHeap
         ACC::previous(node) = NULL; // == NULL means it's a root node
         ACC::child(node) = NULL;
 
-        ++@size_;
+        ++this->size_;
 
-        @root = empty() ? node : meld(@root, node);
+        this->root = empty() ? node : meld(this->root, node);
       }
 
   private:

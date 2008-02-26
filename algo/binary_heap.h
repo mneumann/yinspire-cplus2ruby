@@ -57,25 +57,25 @@ class BinaryHeap
 
       BinaryHeap()
       {
-        @capacity = 0;
-        @size_ = 0;
-        @elements = NULL; // we do lazy allocation!
+        this->capacity = 0;
+        this->size_ = 0;
+        this->elements = NULL; // we do lazy allocation!
       }
 
       ~BinaryHeap()
       {
-        if (@elements != NULL)
+        if (this->elements != NULL)
         {
-          Alloc::free(@elements+1);
+          Alloc::free(this->elements+1);
         }
-        @elements = NULL;
+        this->elements = NULL;
       }
 
     inline E&
       top() const
       {
-        assert(@size > 0);
-        return @elements[1];  
+        assert(this->size > 0);
+        return this->elements[1];  
       }
 
     void
@@ -87,14 +87,14 @@ class BinaryHeap
     inline void
       remove(I i)
       {
-        assert(i <= @size_);
+        assert(i <= this->size_);
 
         // 
         // Element i is removed from the heap and as such becomes
         // a "bubble" (free element). Move the bubble until
         // the bubble becomes a leaf element. 
         //
-        Idx::index_changed(@elements[i], 0);  // detach from heap
+        Idx::index_changed(this->elements[i], 0);  // detach from heap
         I bubble = move_bubble_down(i);
 
         //
@@ -102,30 +102,30 @@ class BinaryHeap
         // the bubble. In case the bubble is already the last element we
         // are done.
         //
-        if (bubble != @size_)
+        if (bubble != this->size_)
         {
-          insert_and_bubble_up(bubble, @elements[@size_]);
+          insert_and_bubble_up(bubble, this->elements[this->size_]);
         }
-        --@size_;
+        --this->size_;
       }
 
     void
       push(const E& element)
       {
-        if (@size_ >= @capacity) resize(2*@capacity);
-        insert_and_bubble_up(++@size_, element);
+        if (this->size_ >= this->capacity) resize(2*this->capacity);
+        insert_and_bubble_up(++this->size_, element);
       }
 
     inline I
       size() const
       {
-        return @size_;
+        return this->size_;
       }
 
     inline bool
       empty() const
       {
-        return (@size_ == 0);
+        return (this->size_ == 0);
       }
     
     /*
@@ -139,9 +139,9 @@ class BinaryHeap
         //
         // Find the position of the first element that is less than +element+.
         // 
-        for (i = @size_; i != 0 && Acc::less(element, @elements[i]); i /= 2);
+        for (i = this->size_; i != 0 && Acc::less(element, this->elements[i]); i /= 2);
 
-        return (i == 0 ? NULL : &@elements[i]); 
+        return (i == 0 ? NULL : &this->elements[i]); 
       }
 
     /*
@@ -150,9 +150,9 @@ class BinaryHeap
     void
       each(void (*yield)(const E&, void*), void *data)
       {
-        for (I i=1; i <= @size_; i++)
+        for (I i=1; i <= this->size_; i++)
         {
-          yield(@elements[i], data);
+          yield(this->elements[i], data);
         }
       }
  
@@ -168,9 +168,9 @@ class BinaryHeap
     inline void
       insert_and_bubble_up(I i, const E& element)
       {
-        for (;i >= 2 && Acc::less(element, @elements[i/2]); i /= 2)
+        for (;i >= 2 && Acc::less(element, this->elements[i/2]); i /= 2)
         {
-          store_element(i, @elements[i/2]);
+          store_element(i, this->elements[i/2]);
         }
 
         // finally store it into the determined hole
@@ -185,17 +185,17 @@ class BinaryHeap
     inline I 
       move_bubble_down(I i)
       {
-        const I sz = @size_;
+        const I sz = this->size_;
         I right_child = i * 2 + 1;
 
         while (right_child <= sz) 
         {
-          if (Acc::less(@elements[right_child-1], @elements[right_child]))
+          if (Acc::less(this->elements[right_child-1], this->elements[right_child]))
           {
             --right_child; // minimum child is left child
           }
 
-          store_element(i, @elements[right_child]);
+          store_element(i, this->elements[right_child]);
           i = right_child;
           right_child = i * 2 + 1;
         }
@@ -205,7 +205,7 @@ class BinaryHeap
         //
         if (right_child-1 == sz)
         {
-          store_element(i, @elements[right_child-1]);
+          store_element(i, this->elements[right_child-1]);
           i = right_child-1;
         }
 
@@ -223,36 +223,36 @@ class BinaryHeap
       {
         E *new_elements;
 
-        if (new_capacity < MIN_CAPA) @capacity = MIN_CAPA;  
-        else @capacity = new_capacity;
+        if (new_capacity < MIN_CAPA) this->capacity = MIN_CAPA;  
+        else this->capacity = new_capacity;
 
         //
         // We do lazy allocation!
         //
-        if (@elements != NULL)
+        if (this->elements != NULL)
         {
-          new_elements = Alloc::realloc_n(@elements+1, @capacity);
+          new_elements = Alloc::realloc_n(this->elements+1, this->capacity);
         }
         else
         {
-          new_elements = Alloc::alloc_n(@capacity);
+          new_elements = Alloc::alloc_n(this->capacity);
         }
 
         assert(new_elements != NULL);
-        assert(@capacity >= @size);
+        assert(this->capacity >= this->size);
 
         //
         // move pointer so that we "introduce" a zero'th 
         // element.
         //
-        @elements = new_elements-1;
+        this->elements = new_elements-1;
       }
 
     inline void
       store_element(I i, const E& element)
       {
-        @elements[i] = element;
-        Idx::index_changed(@elements[i], i); 
+        this->elements[i] = element;
+        Idx::index_changed(this->elements[i], i); 
       }
 
   protected:

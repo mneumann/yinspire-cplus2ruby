@@ -14,12 +14,12 @@ namespace BenchCalendarQueue
 
       ACC()
       {
-        @freelist = new ChunkedFreelistAllocator<ET>(100000);
+        this->freelist = new ChunkedFreelistAllocator<ET>(100000);
       }
 
       ~ACC()
       {
-        delete @freelist;
+        delete this->freelist;
       }
 
       inline void hold(PQ *pq, double increment)
@@ -31,21 +31,21 @@ namespace BenchCalendarQueue
 
       inline void push(PQ *pq, double priority)
       {
-        ET *e = @freelist->allocate();
+        ET *e = this->freelist->allocate();
         e->_priority = priority;
         pq->push(e);
       }
 
       inline void pop(PQ *pq)
       {
-        @freelist->free(pq->pop());
+        this->freelist->free(pq->pop());
       }
 
       inline double pop_return_priority(PQ *pq)
       {
         ET *e = pq->pop();
         double res = e->_priority; 
-        @freelist->free(e);
+        this->freelist->free(e);
         return res;
       }
 

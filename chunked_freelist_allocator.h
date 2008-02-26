@@ -27,9 +27,9 @@ class ChunkedFreelistAllocator
 
     ChunkedFreelistAllocator(unsigned int chunksize)
     {
-      @freelist = NULL;
-      @chunklist = NULL;
-      @chunksize = chunksize;
+      this->freelist = NULL;
+      this->chunklist = NULL;
+      this->chunksize = chunksize;
     }
 
     T*
@@ -37,12 +37,12 @@ class ChunkedFreelistAllocator
       {
 
         // alloc new chunk if no more free elements are available
-        if (@freelist == NULL) alloc_chunk();
+        if (this->freelist == NULL) alloc_chunk();
 
-        assert(@freelist != NULL);
+        assert(this->freelist != NULL);
 
-        T* e = @freelist; 
-        @freelist = ACC::next(e);
+        T* e = this->freelist; 
+        this->freelist = ACC::next(e);
         ACC::next(e) = NULL;
 
         return e;
@@ -52,8 +52,8 @@ class ChunkedFreelistAllocator
       free(T* e)
       {
         //assert(ACC::next(e) == NULL);
-        ACC::next(e) = @freelist;
-        @freelist = e;
+        ACC::next(e) = this->freelist;
+        this->freelist = e;
       }
 
     void
@@ -61,8 +61,8 @@ class ChunkedFreelistAllocator
       {
         assert(last != NULL);
         //assert(ACC::next(first) == NULL);
-        ACC::next(last) = @freelist; 
-        @freelist = first;
+        ACC::next(last) = this->freelist; 
+        this->freelist = first;
       }
 
   protected:
@@ -71,19 +71,19 @@ class ChunkedFreelistAllocator
       alloc_chunk()
       {
         Chunk<T> *new_chunk = new Chunk<T>;
-        new_chunk->next_chunk = @chunklist;
-        @chunklist = new_chunk;
+        new_chunk->next_chunk = this->chunklist;
+        this->chunklist = new_chunk;
 
-        new_chunk->array = new T[@chunksize]; 
+        new_chunk->array = new T[this->chunksize]; 
 
         // put all elements of new chunk on freelist
-        for (unsigned int i=0; i<@chunksize-1; i++)
+        for (unsigned int i=0; i<this->chunksize-1; i++)
         {
           ACC::next(&new_chunk->array[i]) = &new_chunk->array[i+1];
         }
 
-        ACC::next(&new_chunk->array[@chunksize-1]) = @freelist;
-        @freelist = &new_chunk->array[0];
+        ACC::next(&new_chunk->array[this->chunksize-1]) = this->freelist;
+        this->freelist = &new_chunk->array[0];
       }
 
   private:

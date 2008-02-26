@@ -45,7 +45,7 @@ begin
   require './work/yinspire.so'
 rescue LoadError
   Cplus2Ruby.compile_and_load('work/yinspire', 
-    "-DNDEBUG -no-integrated-cpp -B #{Dir.pwd}/tools -O3 -fomit-frame-pointer -Winline -Wall -I#{Dir.pwd} -I${PWD}", "-lstdc++")
+    "-DNDEBUG -O3 -fomit-frame-pointer -Winline -Wall -I#{Dir.pwd} -I${PWD}", "-lstdc++")
   require './work/yinspire.so'
 end
 

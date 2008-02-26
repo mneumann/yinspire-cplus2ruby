@@ -14,12 +14,12 @@ namespace BenchPairingHeap
 
       ACC()
       {
-        @freelist = new ChunkedFreelistAllocator<ET>(100000);
+        this->freelist = new ChunkedFreelistAllocator<ET>(100000);
       }
 
       ~ACC()
       {
-        delete @freelist;
+        delete this->freelist;
       }
 
       inline void hold(PQ *pq, double increment)
@@ -32,14 +32,14 @@ namespace BenchPairingHeap
 
       inline void push(PQ *pq, double priority)
       {
-        ET *e = @freelist->allocate();
+        ET *e = this->freelist->allocate();
         e->priority = priority;
         pq->push(e);
       }
 
       inline void pop(PQ *pq)
       {
-        @freelist->free(pq->top());
+        this->freelist->free(pq->top());
         pq->pop();
       }
 
@@ -48,7 +48,7 @@ namespace BenchPairingHeap
         ET *e = pq->top();
         double res = e->priority; 
         pq->pop();
-        @freelist->free(e);
+        this->freelist->free(e);
         return res;
       }
 

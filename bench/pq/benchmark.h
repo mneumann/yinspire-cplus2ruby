@@ -17,8 +17,8 @@ class Benchmark
 
     Benchmark(PQ *pq, Distribution *distribution)
     {
-      @pq = pq;
-      @distribution = distribution; 
+      this->pq = pq;
+      this->distribution = distribution; 
     }
 
     /*
@@ -81,11 +81,11 @@ class Benchmark
         {
           for (j=0; j<max_queue_size; j++)
           {
-            @acc.push(@pq, distribution->next());
+            this->acc.push(this->pq, distribution->next());
           }
           for (j=0; j<max_queue_size; j++)
           {
-            @acc.pop(@pq);
+            this->acc.pop(this->pq);
           }
         }
       }
@@ -103,12 +103,12 @@ class Benchmark
         {
           for (j=0; j<max_queue_size; j++)
           {
-            @acc.push(@pq, distribution->next());
+            this->acc.push(this->pq, distribution->next());
           }
           last = -INFINITY;
           for (j=0; j<max_queue_size; j++)
           {
-            prio = @acc.pop_return_priority(@pq);
+            prio = this->acc.pop_return_priority(this->pq);
             if (prio < last) return false;
             last = prio;
           }
@@ -148,16 +148,16 @@ class Benchmark
 
         assert(insert_prob > delete_prob);
 
-        while (@pq->size() < queue_size)
+        while (this->pq->size() < queue_size)
         {
           if (rnd_bool.next() < insert_prob)
           {
-            @acc.push(@pq, rnd_real.next());
+            this->acc.push(this->pq, rnd_real.next());
           }
 
-          if (!@pq->empty() && rnd_bool.next() < delete_prob)
+          if (!this->pq->empty() && rnd_bool.next() < delete_prob)
           {
-            @acc.pop(@pq);
+            this->acc.pop(this->pq);
           }
         }
       }
@@ -201,7 +201,7 @@ class Benchmark
     inline void
       hold()
       {
-        @acc.hold(@pq, distribution->next()); 
+        this->acc.hold(this->pq, distribution->next()); 
       }
 
     /*

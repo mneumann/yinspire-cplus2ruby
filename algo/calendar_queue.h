@@ -27,28 +27,28 @@ class CalendarQueue
 
     CalendarQueue(real year_width=1.0)
     {
-      @size_ = 0;
-      @year_width = year_width;
-      @day_width = year_width;
+      this->size_ = 0;
+      this->year_width = year_width;
+      this->day_width = year_width;
 
-      @current_year = 0;
-      @current_day = 0;
+      this->current_year = 0;
+      this->current_day = 0;
 
-      @num_days = 1;
-      @days = new E*[1];
-      @days[0] = NULL;
+      this->num_days = 1;
+      this->days = new E*[1];
+      this->days[0] = NULL;
     }
 
     inline I
       size() const
       {
-        return @size_;
+        return this->size_;
       }
 
     inline bool
       empty() const
       {
-        return (@size_ == 0);
+        return (this->size_ == 0);
       }
 
     void
@@ -58,10 +58,10 @@ class CalendarQueue
 
         assert(priority >= 0.0);
 
-        if (++@size_ > 2*@num_days) resize_double();
+        if (++this->size_ > 2*this->num_days) resize_double();
 
         // map priority to a day
-        I day = ((I)(priority / @day_width)) % @num_days;
+        I day = ((I)(priority / this->day_width)) % this->num_days;
 
         // and sort element into that day
         insert_sorted(day, element);
@@ -73,31 +73,31 @@ class CalendarQueue
         //
         if (priority < min_start())
         {
-          @current_day  = day;
-          @current_year = (I)(priority / @year_width);
+          this->current_day  = day;
+          this->current_year = (I)(priority / this->year_width);
         }
       }
 
     inline real min_start() const { return day_start() + year_start(); }
-    inline real day_start() const { return @current_day * @day_width; }
-    inline real year_start() const { return @current_year * @year_width; }
+    inline real day_start() const { return this->current_day * this->day_width; }
+    inline real year_start() const { return this->current_year * this->year_width; }
  
     E*
       pop()
       {
-        assert(@size_ > 0);
+        assert(this->size_ > 0);
 
-        if (--@size_ < @num_days/2 && @num_days > 1) resize_half();
+        if (--this->size_ < this->num_days/2 && this->num_days > 1) resize_half();
 
         real priority;
         real min_priority = INFINITY;
-        real max_value_this_year = (@current_year+1)*@year_width;
+        real max_value_this_year = (this->current_year+1)*this->year_width;
         E *top;
         I i;
 
-        for (i = @current_day; i < @num_days; i++)
+        for (i = this->current_day; i < this->num_days; i++)
         {
-          top = @days[i];
+          top = this->days[i];
           if (top != NULL)
           {
             priority = ACC::priority(top);
@@ -105,8 +105,8 @@ class CalendarQueue
             if (priority < max_value_this_year)
             {
               // remove top element
-              @days[i] = ACC::next(top); 
-              @current_day = i;
+              this->days[i] = ACC::next(top); 
+              this->current_day = i;
               ACC::next(top) = NULL;
               return top;
             }
@@ -115,11 +115,11 @@ class CalendarQueue
         }
 
         //
-        // continue with the first element up to @current_day
+        // continue with the first element up to this->current_day
         //
-        for (i = 0; i < @current_day; i++)
+        for (i = 0; i < this->current_day; i++)
         {
-          top = @days[i];
+          top = this->days[i];
           if (top != NULL)
           {
             priority = ACC::priority(top);
@@ -127,11 +127,11 @@ class CalendarQueue
           }
         }
 
-        @current_year = (I)(min_priority / @year_width);
-        @current_day  = (I)(min_priority / @day_width) % @num_days;
+        this->current_year = (I)(min_priority / this->year_width);
+        this->current_day  = (I)(min_priority / this->day_width) % this->num_days;
 
-        top = @days[@current_day];
-        @days[@current_day] = ACC::next(top); 
+        top = this->days[this->current_day];
+        this->days[this->current_day] = ACC::next(top); 
         ACC::next(top) = NULL;
 
         return top;
@@ -142,7 +142,7 @@ class CalendarQueue
     void
       insert_sorted(I day, E *element)
       {
-        E *curr = @days[day];
+        E *curr = this->days[day];
         E *prev = NULL; 
         const real priority = ACC::priority(element);
 
@@ -159,7 +159,7 @@ class CalendarQueue
         ACC::next(element) = curr;
 
         if (prev != NULL) ACC::next(prev) = element;
-        else              @days[day] = element;
+        else              this->days[day] = element;
       }
 
     /*
@@ -168,16 +168,16 @@ class CalendarQueue
     void
       resize_double()
       {
-        E **new_days = new E*[2*@num_days];
+        E **new_days = new E*[2*this->num_days];
 
-        const real dw = @day_width / 2.0;
+        const real dw = this->day_width / 2.0;
         E* c[2];
 
-        for (I i = 0; i < @num_days; i++)
+        for (I i = 0; i < this->num_days; i++)
         {
           c[0] = new_days[i*2]   = NULL;
           c[1] = new_days[i*2+1] = NULL;
-          for (E *curr = @days[i]; curr != NULL; curr = ACC::next(curr))
+          for (E *curr = this->days[i]; curr != NULL; curr = ACC::next(curr))
           {
             const I day = (I)(ACC::priority(curr) / dw) % 2;
             if (c[day] != NULL)
@@ -195,33 +195,33 @@ class CalendarQueue
           if (c[1] != NULL) ACC::next(c[1]) = NULL;
         }
 
-        delete [] @days;
+        delete [] this->days;
 
-        @days = new_days;
-        @num_days *= 2;
-        @day_width /= 2.0;
-        @current_year = 0;
-        @current_day = 0;
+        this->days = new_days;
+        this->num_days *= 2;
+        this->day_width /= 2.0;
+        this->current_year = 0;
+        this->current_day = 0;
       }
 
     // TODO: merge
     void
       resize_half()
       {
-        resize(@num_days/2, @day_width*2.0);
+        resize(this->num_days/2, this->day_width*2.0);
       }
 
     void
       resize(I new_num_days, real new_day_width)
       {
-        E **old_days = @days;
-        @days = new E*[new_num_days];
+        E **old_days = this->days;
+        this->days = new E*[new_num_days];
         E *element;
 
-        // initialize @days to NULL
-        for (I i = 0; i < new_num_days; i++) @days[i] = NULL;
+        // initialize this->days to NULL
+        for (I i = 0; i < new_num_days; i++) this->days[i] = NULL;
 
-        for (I i = 0; i < @num_days; i++)
+        for (I i = 0; i < this->num_days; i++)
         {
           for (E *curr = old_days[i]; curr != NULL; )
           {
@@ -234,10 +234,10 @@ class CalendarQueue
 
         delete[] old_days;
 
-        @num_days = new_num_days;
-        @day_width = new_day_width;
-        @current_year = 0;
-        @current_day = 0;
+        this->num_days = new_num_days;
+        this->day_width = new_day_width;
+        this->current_year = 0;
+        this->current_day = 0;
       }
 
   private:

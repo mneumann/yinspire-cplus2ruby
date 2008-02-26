@@ -37,7 +37,7 @@ struct ExponentialDistribution : public Distribution
 
   virtual double next() { return a * -log(gen()); }
 
-  virtual void output_name(std::ostream &o) { o << "Exponential(" << @a << ")"; } 
+  virtual void output_name(std::ostream &o) { o << "Exponential(" << this->a << ")"; } 
 };
 
 struct UniformDistribution : public Distribution
@@ -47,7 +47,7 @@ struct UniformDistribution : public Distribution
   UniformDistribution(double _a, double _b) : a(_a), b(_b) {} 
 
   virtual double next() { return (a + (b-a)*gen()); }
-  virtual void output_name(std::ostream &o) { o << "Uniform(" << @a << "," << @b << ")"; } 
+  virtual void output_name(std::ostream &o) { o << "Uniform(" << this->a << "," << this->b << ")"; } 
 };
 
 struct TriangularDistribution : public Distribution
@@ -57,7 +57,7 @@ struct TriangularDistribution : public Distribution
   TriangularDistribution(double _a, double _b) : a(_a), b(_b) {} 
 
   virtual double next() { return (a + (b-a)*sqrt(gen())); }
-  virtual void output_name(std::ostream &o) { o << "Triangular(" << @a << "," << @b << ")"; } 
+  virtual void output_name(std::ostream &o) { o << "Triangular(" << this->a << "," << this->b << ")"; } 
 };
 
 struct NegativeTriangularDistribution : public Distribution
@@ -67,7 +67,7 @@ struct NegativeTriangularDistribution : public Distribution
   NegativeTriangularDistribution(double _a, double _b) : a(_a), b(_b) {} 
 
   virtual double next() { return (a + (b-a)*(1.0 - sqrt(1.0 - gen()))); }
-  virtual void output_name(std::ostream &o) { o << "NegativeTriangular(" << @a << "," << @b << ")"; } 
+  virtual void output_name(std::ostream &o) { o << "NegativeTriangular(" << this->a << "," << this->b << ")"; } 
 };
 
 struct BimodalDistribution : public Distribution
@@ -78,7 +78,7 @@ struct BimodalDistribution : public Distribution
 
   virtual double next() { return a * gen() + (gen() < b ? a : 0); }
     
-  virtual void output_name(std::ostream &o) { o << "Bimodal(" << @a << "," << @b << ")"; } 
+  virtual void output_name(std::ostream &o) { o << "Bimodal(" << this->a << "," << this->b << ")"; } 
 };
 
 struct ParetoDistribution : public Distribution
@@ -89,5 +89,5 @@ struct ParetoDistribution : public Distribution
 
   virtual double next() { return pow(1.0/(1.0 - gen()), 1.0 / a); }
     
-  virtual void output_name(std::ostream &o) { o << "Pareto(" << @a << ")"; } 
+  virtual void output_name(std::ostream &o) { o << "Pareto(" << this->a << ")"; } 
 };
