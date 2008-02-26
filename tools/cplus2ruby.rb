@@ -4,8 +4,15 @@
 # Gluing C++ and Ruby together in an Object-oriented manner.  
 #
 # Author::    Michael Neumann
-# Copyright:: (c) 2007 by Michael Neumann (mneumann@ntecs.de)
+# Copyright:: (c) 2007, 2008 by Michael Neumann (mneumann@ntecs.de)
 # License::   Released under the same terms as Ruby itself.
+#
+
+#
+# Limitations:
+#
+# Modules are special in Cplus2Ruby, because they have to be "flat"
+# and have to be closed at the time they are mixed in.
 #
 
 if RUBY_VERSION >= "1.9"
@@ -83,7 +90,24 @@ module Cplus2Ruby
   # Global code
   #
   def self.<<(code)
+    model.code << "\n"
     model.code << code
+    model.code << "\n"
+  end
+
+  def self.include(header)
+    case header
+    when Symbol
+      self << %{#include <#{header}>}
+    when String
+      self << %{#include "#{header}"}
+    else
+      raise ArgumentError
+    end
+  end
+
+  def self.settings(h={})
+    model.settings(h)
   end
 
   def self.model
@@ -96,15 +120,25 @@ module Cplus2Ruby
 
   #
   # Called when Cplus2Ruby is included in another module or a class.
+  # If a module is included in another module, then the module
+  # to be included must be closed.
   #
-  def self.append_features(mod)
-    super
-    mod.extend(self)
-    Cplus2Ruby.model[mod] # this will register the class
+
+  def self.append_features(mod, this=nil)
+    super(mod)
+    mod.extend(this || self)
     # also register a subclass
     def mod.inherited(k)
       Cplus2Ruby.model[k]
     end
+    # transitive append_features
+    def mod.append_features(k, this=nil)
+      Cplus2Ruby.append_features(k, this||self)
+    end
+    #Cplus2Ruby.model[mod] # this will register the class
+
+    # append all properties of "self" to mod.
+    Cplus2Ruby.model[mod].append(Cplus2Ruby.model[this || self])
   end
 
   ###################################
@@ -125,7 +159,6 @@ module Cplus2Ruby
   end
 
   def property(name, type=Object, options={})
-    type = type.to_s if type.is_a?(Symbol)
     Cplus2Ruby.model[self].add_property(name, type, options)
   end
 
@@ -175,6 +208,8 @@ module Cplus2Ruby
     Cplus2Ruby.model[self].add_method(name, params, body, options)
   end 
 
+  alias method_c method
+
   def helper_header(body)
     Cplus2Ruby.model[self].add_helper_header(body)
   end
@@ -216,7 +251,7 @@ module Cplus2Ruby
       #pid = fork do
         require 'mkmf'
         $CFLAGS = cflags
-        $LIBS << (" " + libs)
+        $LIBS << (" -lstdc++ " + libs)
         create_makefile(mod)
         system "#{make}" # exec
       #end
@@ -230,8 +265,16 @@ module Cplus2Ruby
     end
     require "#{dir}/#{mod}.#{Config::CONFIG['DLEXT']}"
   end
-
 end
+
+class Cplus2Ruby::Entity
+  def self.inherited(klass)
+    super
+    klass.class_eval "include ::Cplus2Ruby"
+  end
+end
+
+Cplus2Ruby_ = Cplus2Ruby::Entity 
 
 class Cplus2Ruby::Model
   attr_reader :type_aliases, :type_map, :code
@@ -241,8 +284,14 @@ class Cplus2Ruby::Model
     @type_aliases = OHash.new
     @type_map = get_type_map()
     @code = ""
+    @settings = {:substitute_iv_ats => true}
 
     add_type_alias Object => 'VALUE'
+  end
+
+  def settings(h={})
+    @settings.update(h)
+    @settings
   end
 
   def add_type_alias(h)
@@ -263,7 +312,10 @@ class Cplus2Ruby::Model
   end
 
   def each_model_class(&block)
-    @model_classes.each_value(&block)
+    @model_classes.each_value do |mk|
+      next if mk.is_module?
+      block.call(mk)
+    end
   end
 
   # 
@@ -366,11 +418,24 @@ class Cplus2Ruby::Model::ModelClass
     @virtuals = []
   end
 
+  def append(mk)
+    @properties.push(*mk.properties)
+    @methods.push(*mk.methods)
+    @helper_headers.push(*mk.helper_headers)
+    @helper_codes.push(*mk.helper_codes)
+    @virtuals.push(*mk.virtuals)
+  end
+
+  def is_module?
+    !@klass.is_a?(Class)
+  end
+
   def add_virtual(virt)
     @virtuals << virt
   end
 
   def add_property(name, type, options)
+    type = type.to_s if type.is_a?(Symbol)
     @properties << Cplus2Ruby::Model::ModelProperty.new(name, type, options) 
   end
 
@@ -383,7 +448,14 @@ class Cplus2Ruby::Model::ModelClass
   end
 
   def add_method(name, params, body, options)
-    @methods << Cplus2Ruby::Model::ModelMethod.new(self, name, params, body, options)
+    # Convert Symbols to strings for types
+    nparams = OHash.new
+    params.each {|k,v|
+      v = v.to_s if v.is_a?(Symbol)
+      nparams[k] = v
+    }
+
+    @methods << Cplus2Ruby::Model::ModelMethod.new(self, name, nparams, body, options)
   end
 end
 
@@ -436,12 +508,22 @@ class Cplus2Ruby::CodeGenerator
     @model = model
   end
 
-  def write(mod_name)
+  # 
+  # Allows preprocessing of generated code.
+  #
+  def write_out(file, &block)
+    block.call(str="")
+    if @model.settings()[:substitute_iv_ats] 
+      str.gsub!('@', 'this->')
+    end
+    File.open(file, 'w+') {|out| out << str}
+  end
 
+  def write(mod_name)
     #
     # mod_name.h
     #
-    File.open(mod_name + ".h", 'w+') do |out| 
+    write_out(mod_name + ".h") do |out|
       header(out)
       type_aliases(out)
       out << @model.code
@@ -454,7 +536,7 @@ class Cplus2Ruby::CodeGenerator
     #
     # mod_name.cc
     #
-    File.open(mod_name + ".cc", 'w+') do |out| 
+    write_out(mod_name + ".cc") do |out| 
       out << %{#include "#{mod_name}.h"\n\n}
       class_bodies(out)
     end
@@ -462,7 +544,7 @@ class Cplus2Ruby::CodeGenerator
     #
     # mod_name_wrap.cc
     #
-    File.open(mod_name + "_wrap.cc", 'w+') do |out| 
+    write_out(mod_name + "_wrap.cc") do |out| 
       out << %{#include "#{mod_name}.h"\n\n}
 
       ruby_method_wrappers(out)
@@ -550,7 +632,7 @@ class Cplus2Ruby::CodeGenerator
 
     model_class.properties.each do |prop|
       if mark = @model.lookup_type_entry(:mark, prop.options, prop.type) 
-        out << mark.gsub('%s', "@#{prop.name}")
+        out << mark.gsub('%s', "this->#{prop.name}")
         out << ";\n"
       end
     end
@@ -620,7 +702,7 @@ class Cplus2Ruby::CodeGenerator
 
     model_class.properties.each do |prop|
       if free = @model.lookup_type_entry(:free, prop.options, prop.type)
-        out << mark.gsub('%s', "@#{prop.name}")
+        out << mark.gsub('%s', "this->#{prop.name}")
         out << ";\n"
       end
     end
@@ -707,10 +789,10 @@ class Cplus2Ruby::CodeGenerator
   def class_declaration(model_class, out)
     out << "struct #{model_class.klass.name}"
     sc = model_class.klass.superclass
-    if sc != Object
-      sc = sc.name
-    else
+    if sc == Object or sc == Cplus2Ruby::Entity
       sc = "RubyObject"
+    else
+      sc = sc.name
     end
     out << " : #{sc}\n" if sc
 
@@ -761,9 +843,9 @@ class Cplus2Ruby::CodeGenerator
       init = @model.lookup_type_entry(:init, prop.options, prop.type)
       unless init.nil?
         if init.is_a?(String) and init.include?("%s")
-          out << init.gsub('%s', "@#{prop.name}")
+          out << init.gsub('%s', "this->#{prop.name}")
         else
-          out << "@#{prop.name} = #{init}"
+          out << "this->#{prop.name} = #{init}"
         end
         out << ";\n"
       end
@@ -841,12 +923,6 @@ struct RubyObject {
     __obj__ = Qnil;
   }
 
-  /* FIXME: ??? */
-  void *operator new (size_t num_bytes)
-  {
-    return malloc(num_bytes + 12);
-  }
-
   virtual ~RubyObject() {};
 
   static void __free(void *ptr) {
@@ -857,7 +933,7 @@ struct RubyObject {
     ((RubyObject*)ptr)->__mark__();
   }
 
-  virtual void __free__() { free(this); }
+  virtual void __free__() { delete this; }
   virtual void __mark__() { }
 };
 EOS

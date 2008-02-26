@@ -24,6 +24,8 @@ class Synapse < NeuralEntity
   #
   property :next_pre_synapse, Synapse
   property :next_post_synapse, Synapse
+  property :prev_pre_synapse, Synapse
+  property :prev_post_synapse, Synapse
 
   # 
   # Only propagate the stimulation if it doesn't originate from the

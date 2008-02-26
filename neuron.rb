@@ -2,7 +2,7 @@
 # The base class of all neurons.
 #
 class Neuron < NeuralEntity
-
+  
   #
   # Pointers to the first/last pre/post Synapse.
   #
@@ -35,13 +35,6 @@ class Neuron < NeuralEntity
   # stimulates it's pre synapses upon firing.
   #
   property :hebb, 'bool', :init => false, :marshal => true
-
-  #
-  # O(1)
-  #
-  def connect(target)
-    add_post_synapse(target)
-  end
 
   #
   # O(n)
@@ -94,6 +87,9 @@ class Neuron < NeuralEntity
     end
   end
 
+  #
+  # O(1)
+  #
   def add_pre_synapse(syn)
     raise ArgumentError, "Synapse expected" unless syn.kind_of?(Synapse)
     raise "Synapse already connected" if syn.post_neuron || syn.next_pre_synapse
@@ -110,6 +106,9 @@ class Neuron < NeuralEntity
     syn.post_neuron = self
   end
 
+  #
+  # O(1)
+  #
   def add_post_synapse(syn)
     raise ArgumentError, "Synapse expected" unless syn.kind_of?(Synapse)
     raise "Synapse already connected" if syn.pre_neuron || syn.next_post_synapse
@@ -126,11 +125,62 @@ class Neuron < NeuralEntity
     syn.pre_neuron = self
   end
 
+  alias connect add_post_synapse
+
+  def delete_pre_synapse(syn)
+    raise ArgumentError, "Synapse expected" unless syn.kind_of?(Synapse)
+    raise "Synapse not connected to this Neuron" if syn.post_neuron != self
+
+    prev = find_preceding_synapse(syn, first_pre_synapse(), :next_pre_syapse)
+
+    #
+    # Remove +target+ from linked list.
+    #
+    if prev
+      prev.next_pre_synapse = target.next_post_synapse
+      self.last_post_synapse = prev if self.last_post_synapse == target 
+    else
+      #
+      # target is the only synapse in the post synapse list.
+      #
+      assert self.first_post_synapse == target
+      assert self.last_post_synapse == target
+      self.first_post_synapse = nil
+      self.last_post_synapse = nil
+    end
+
+    target.pre_neuron = nil
+    target.next_post_synapse = nil
+
+  end
+
+  def delete_post_synapse(syn)
+  end
+
   protected
 
   #
-  # NOTE: The stimulation weight is 0.0 below as the synapse will add
-  # it's weight to the preceding neurons.
+  # Find the synapse in the linked list that precedes +syn+, starting
+  # at synapse +first+ and using the +next_method+ chaing (e.g.
+  # :next_pre_synapse or :next_post_synapse).
+  #
+  def find_preceding_synapse(syn, first, next_method)
+    prev, curr = nil, first
+
+    while true
+      break if curr == syn
+      break unless curr
+      prev = curr
+      curr = curr.send(next_method)
+    end
+
+    raise "Synapse not in pre synapse list" if curr != syn
+    return prev
+  end
+
+  #
+  # NOTE: The stimulation weight is 0.0 (see below) as the synapse will
+  # add it's weight to the preceding neurons.
   #
   method :fire_synapses, {:at => 'simtime'}, %{
     if (@hebb) 
