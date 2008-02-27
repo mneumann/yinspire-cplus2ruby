@@ -40,54 +40,64 @@ require 'yinspire/neural_entity'
 require 'yinspire/structure_mixin'
 require 'yinspire/neuron'
 require 'yinspire/synapse'
-require 'yinspire/neuron_srm_01'
-require 'yinspire/neuron_input'
 
 YINSPIRE_ROOT = File.expand_path(File.join(File.dirname(__FILE__), ".."))
 YINSPIRE_WORK = File.join(YINSPIRE_ROOT, "work")
 
-begin
-  require "#{YINSPIRE_WORK}/yinspire.so"
-rescue LoadError
-  Cplus2Ruby.compile_and_load("#{YINSPIRE_WORK}/yinspire", 
-    "-DNDEBUG -O3 -fomit-frame-pointer -Winline -Wall -I#{YINSPIRE_ROOT}/src -I${PWD}", "-lstdc++")
-  require "#{YINSPIRE_WORK}/yinspire.so"
-end
+module Yinspire
 
-#
-# Generate load/dump methods automatically 
-#
-Cplus2Ruby.model.each_model_class do |mc|
-  if mc.klass.ancestors.include?(NeuralEntity)
-    next unless mc.properties.any? {|prop| prop.options[:marshal] }
-
-    load_code = ""
-    dump_code = ""
-    mc.properties.each do |prop| 
-      next unless prop.options[:marshal]
-
-      init = prop.init(Cplus2Ruby.model)
-      raise "cannot specify :marshal without :init" if init.nil?
-      raise ":init of String not allowed with :marshal" if init.is_a?(String)
-
-      load_code << "  self.#{prop.name} = data['#{prop.name}'] || #{init}\n"
-      dump_code << "  into['#{prop.name}'] = self.#{prop.name} if self.#{prop.name} != #{init}\n"
+  def self.startup
+    so = "#{YINSPIRE_WORK}/yinspire.so"
+    cflags = "-DNDEBUG -O3 -fomit-frame-pointer -Winline -Wall " + 
+             "-I#{YINSPIRE_ROOT}/src -I${PWD}"
+    ldflags = "-lstdc++"
+    begin
+      require so
+    rescue LoadError
+      Cplus2Ruby.compile_and_load("#{YINSPIRE_WORK}/yinspire", cflags, ldflags)
+      require so
     end
-    code = %{
-      def load(data)
-        #{ mc.klass == NeuralEntity ? '' : 'super' }\n
-        #{load_code}
-      end
-      def dump(into)
-        #{ mc.klass == NeuralEntity ? '' : 'super' }\n
-        #{dump_code}
-      end
-    }
-    if $DEBUG
-      puts "generated load/dump code for #{mc.klass} is:"
-      puts code
-      puts "-----"
-    end
-    mc.klass.class_eval code
+    gen_load_dump()
   end
-end
+
+  #
+  # Generate load/dump methods automatically 
+  #
+  def self.gen_load_dump
+    Cplus2Ruby.model.each_model_class do |mc|
+      if mc.klass.ancestors.include?(NeuralEntity)
+        next unless mc.properties.any? {|prop| prop.options[:marshal] }
+
+        load_code = ""
+        dump_code = ""
+        mc.properties.each do |prop| 
+          next unless prop.options[:marshal]
+
+          init = prop.init(Cplus2Ruby.model)
+          raise "cannot specify :marshal without :init" if init.nil?
+          raise ":init of String not allowed with :marshal" if init.is_a?(String)
+
+          load_code << "  self.#{prop.name} = data['#{prop.name}'] || #{init}\n"
+          dump_code << "  into['#{prop.name}'] = self.#{prop.name} if self.#{prop.name} != #{init}\n"
+        end
+        code = %{
+          def load(data)
+            #{ mc.klass == NeuralEntity ? '' : 'super' }\n
+            #{load_code}
+          end
+          def dump(into)
+            #{ mc.klass == NeuralEntity ? '' : 'super' }\n
+            #{dump_code}
+          end
+        }
+        if $DEBUG
+          puts "generated load/dump code for #{mc.klass} is:"
+          puts code
+          puts "-----"
+        end
+        mc.klass.class_eval code
+      end
+    end
+  end
+
+end # module Yinspire

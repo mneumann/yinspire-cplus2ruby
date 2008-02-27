@@ -2,6 +2,10 @@ $LOAD_PATH.unshift "src"
 $LOAD_PATH.unshift "tools"
 
 require 'yinspire'
+require 'yinspire/neuron_input'
+require 'yinspire/neuron_output'
+
+Yinspire.startup
 
 sim = Simulator.new
 sim.stimuli_tolerance = 0.0 
@@ -12,7 +16,7 @@ inputs = (0..9).map {|i|
 }
 
 outputs = (0..9).map {|i|
-  Neuron_Input.new("out_#{i}", sim)
+  Neuron_Output.new("out_#{i}", sim)
 }
 
 synapses = (0..9).map {|i|
