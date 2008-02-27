@@ -37,6 +37,7 @@ class Synapse < NeuralEntity; end
 
 require 'yinspire/simulator'
 require 'yinspire/neural_entity'
+require 'yinspire/structure_mixin'
 require 'yinspire/neuron'
 require 'yinspire/synapse'
 require 'yinspire/neuron_srm_01'
