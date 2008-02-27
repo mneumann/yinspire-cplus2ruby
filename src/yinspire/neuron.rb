@@ -32,19 +32,19 @@ class Neuron < NeuralEntity
   # NOTE: The stimulation weight is 0.0 (see below) as the synapse will
   # add it's weight to the preceding neurons.
   #
-  method :fire_synapses, {:at => 'simtime'}, %{
+  method :fire_synapses, {:at => 'simtime'}, {:weight => 'real'}, %{
     if (@hebb) 
     {
       for (Synapse *syn = @first_pre_synapse; syn != NULL;
           syn = syn->next_pre_synapse)
       {
-        syn->stimulate(at, 0.0, this);
+        syn->stimulate(at, weight, this);
       }
     }
     for (Synapse *syn = @first_post_synapse; syn != NULL;
         syn = syn->next_post_synapse)
     {
-      syn->stimulate(at, 0.0, this);
+      syn->stimulate(at, weight, this);
     }
   }
 

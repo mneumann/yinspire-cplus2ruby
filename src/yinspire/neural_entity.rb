@@ -3,6 +3,13 @@
 # Neurons and Synapses.
 #
 class NeuralEntity
+
+  def initialize(id=nil, simulator=nil, &block)
+    self.id = id
+    self.simulator = simulator
+    block.call(self) if block
+  end
+
   # 
   # The data structure used for storing a fire impluse or any other form
   # of stimulation.

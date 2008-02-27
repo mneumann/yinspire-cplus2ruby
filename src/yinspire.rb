@@ -41,6 +41,7 @@ require 'yinspire/structure_mixin'
 require 'yinspire/neuron'
 require 'yinspire/synapse'
 require 'yinspire/neuron_srm_01'
+require 'yinspire/neuron_input'
 
 YINSPIRE_ROOT = File.expand_path(File.join(File.dirname(__FILE__), ".."))
 YINSPIRE_WORK = File.join(YINSPIRE_ROOT, "work")

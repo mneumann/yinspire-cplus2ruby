@@ -7,13 +7,29 @@ sim = Simulator.new
 sim.stimuli_tolerance = 0.0 
 #sim.load('/tmp/gereon2005.json')
 
-n = Neuron_SRM_01.new
-n.simulator = sim
-n.id = "test"
+inputs = (0..9).map {|i|
+  Neuron_Input.new("inp_#{i}", sim)
+}
 
-10.times do |i|
-  n.stimulate(0.0+i, 1.0, nil)
-end
+outputs = (0..9).map {|i|
+  Neuron_Input.new("out_#{i}", sim)
+}
+
+synapses = (0..9).map {|i|
+  Synapse.new("syn_#{i}", sim) {|s|
+    s.delay = 0.4
+    s.weight = 10.0
+  }
+}
+
+(0..9).each {|i|
+  inputs[i].connect(synapses[i])
+  synapses[i].connect(outputs[i])
+}
+
+(0..9).each {|i|
+  inputs[i].stimulate(0.0+i, 1.0, nil)
+}
 
 stop_at = ARGV[0].to_f 
 
