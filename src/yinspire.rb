@@ -1,4 +1,4 @@
-require 'tools/cplus2ruby'
+require 'cplus2ruby'
 
 Cplus2Ruby.add_type_alias 'real'  => 'float'
 Cplus2Ruby.add_type_alias 'simtime' => 'float'
@@ -11,7 +11,7 @@ Cplus2Ruby << %{
   #include <math.h>
   #include "algo/binary_heap.h"
   #include "algo/indexed_binary_heap.h"
-  #include "ruby_memory_allocator.h"
+  #include "alloc/ruby_memory_allocator.h"
 
   #define real_exp expf
   #define real_fabs fabsf
@@ -35,18 +35,21 @@ class NeuralEntity; include Cplus2Ruby end
 class Neuron < NeuralEntity; end
 class Synapse < NeuralEntity; end
 
-require 'simulator'
-require 'neural_entity'
-require 'neuron'
-require 'synapse'
-require 'neuron_srm_01'
+require 'yinspire/simulator'
+require 'yinspire/neural_entity'
+require 'yinspire/neuron'
+require 'yinspire/synapse'
+require 'yinspire/neuron_srm_01'
+
+YINSPIRE_ROOT = File.expand_path(File.join(File.dirname(__FILE__), ".."))
+YINSPIRE_WORK = File.join(YINSPIRE_ROOT, "work")
 
 begin
-  require './work/yinspire.so'
+  require "#{YINSPIRE_WORK}/yinspire.so"
 rescue LoadError
-  Cplus2Ruby.compile_and_load('work/yinspire', 
-    "-DNDEBUG -O3 -fomit-frame-pointer -Winline -Wall -I#{Dir.pwd} -I${PWD}", "-lstdc++")
-  require './work/yinspire.so'
+  Cplus2Ruby.compile_and_load("#{YINSPIRE_WORK}/yinspire", 
+    "-DNDEBUG -O3 -fomit-frame-pointer -Winline -Wall -I#{YINSPIRE_ROOT}/src -I${PWD}", "-lstdc++")
+  require "#{YINSPIRE_WORK}/yinspire.so"
 end
 
 #
