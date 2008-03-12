@@ -7,11 +7,11 @@
 
 Neuron_SRM_01::Neuron_SRM_01()
 {
-  @tau_m = 0.0;
-  @tau_ref = 0.0;
-  @ref_weight = 0.0;
-  @mem_pot = 0.0;
-  @const_threshold = 0.0;
+  this->tau_m = 0.0;
+  this->tau_ref = 0.0;
+  this->ref_weight = 0.0;
+  this->mem_pot = 0.0;
+  this->const_threshold = 0.0;
 }
 
 void
@@ -24,19 +24,19 @@ Neuron_SRM_01::load(jsonHash *data)
 {
   super::load(data);
 
-  @tau_m = data->get_number("tau_m", 0.0);
-  @tau_ref = data->get_number("tau_ref", 0.0);
-  @ref_weight = data->get_number("ref_weight", 0.0);
-  @mem_pot = data->get_number("mem_pot", 0.0);
-  @const_threshold = data->get_number("const_threshold", 0.0);
+  this->tau_m = data->get_number("tau_m", 0.0);
+  this->tau_ref = data->get_number("tau_ref", 0.0);
+  this->ref_weight = data->get_number("ref_weight", 0.0);
+  this->mem_pot = data->get_number("mem_pot", 0.0);
+  this->const_threshold = data->get_number("const_threshold", 0.0);
 }
 
 void
 Neuron_SRM_01::stimulate(simtime at, real weight, NeuralEntity *source)
 {
-  if (at >= @last_fire_time + @abs_refr_duration)
+  if (at >= this->last_fire_time + this->abs_refr_duration)
   {
-    ++@simulator->stat_event_counter;
+    ++this->simulator->stat_event_counter;
     super::stimulate(at, weight, source);
   }
 }
@@ -45,7 +45,7 @@ void
 Neuron_SRM_01::process(simtime at)
 {
   real weight = stimuli_sum(at);
-  const real delta = at - @last_fire_time - @abs_refr_duration;
+  const real delta = at - this->last_fire_time - this->abs_refr_duration;
 
   if (delta < 0.0) return;
 
@@ -53,15 +53,15 @@ Neuron_SRM_01::process(simtime at)
    * Calculate new membrane potential
    */
 
-  @mem_pot = weight + @mem_pot * real_exp( -(at - @last_spike_time)/@tau_m );
-  @last_spike_time = at;
+  this->mem_pot = weight + this->mem_pot * real_exp( -(at - this->last_spike_time)/this->tau_m );
+  this->last_spike_time = at;
 
   /*
    * Calculate dynamic threshold
    */
-  const real dynamic_threshold = @ref_weight * real_exp(-delta/@tau_ref);
+  const real dynamic_threshold = this->ref_weight * real_exp(-delta/this->tau_ref);
 
-  if (@mem_pot >= @const_threshold + dynamic_threshold)
+  if (this->mem_pot >= this->const_threshold + dynamic_threshold)
   {
     fire(at);
   }
@@ -70,8 +70,8 @@ Neuron_SRM_01::process(simtime at)
 void
 Neuron_SRM_01::fire(simtime at)
 {
-  @simulator->stat_record_fire_event(at, this);
-  @mem_pot = 0.0;
-  @last_fire_time = at;
+  this->simulator->stat_record_fire_event(at, this);
+  this->mem_pot = 0.0;
+  this->last_fire_time = at;
   fire_synapses(at);
 }

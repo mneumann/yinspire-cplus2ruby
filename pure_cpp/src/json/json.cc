@@ -14,14 +14,14 @@ struct jsonArrayItem
 
   jsonArrayItem(jsonValue* value, jsonArrayItem* next=NULL)
   {
-    @value = value;
-    @next = next;
-    @value->ref_incr();
+    this->value = value;
+    this->next = next;
+    this->value->ref_incr();
   }
 
   ~jsonArrayItem()
   {
-    @value->ref_decr();
+    this->value->ref_decr();
   }
 };
 
@@ -33,24 +33,24 @@ struct jsonHashItem
 
   jsonHashItem(jsonString* key, jsonValue* value, jsonHashItem* next=NULL)
   {
-    @key = key;
-    @value = value;
-    @next = next;
+    this->key = key;
+    this->value = value;
+    this->next = next;
 
-    @key->ref_incr();
-    @value->ref_incr();
+    this->key->ref_incr();
+    this->value->ref_incr();
   }
 
   ~jsonHashItem()
   {
-    @key->ref_decr();
-    @value->ref_decr();
+    this->key->ref_decr();
+    this->value->ref_decr();
   }
 };
 
 jsonValue::jsonValue() 
 {
-  @ref_count = 1;
+  this->ref_count = 1;
 }
 
 jsonValue::~jsonValue()
@@ -69,12 +69,12 @@ bool jsonValue::is_type(const char* t)
 
 void jsonValue::ref_incr()
 {
-  @ref_count++;
+  this->ref_count++;
 }
 
 void jsonValue::ref_decr()
 {
-  if (--@ref_count <= 0) delete this;
+  if (--this->ref_count <= 0) delete this;
 }
 
 jsonNull* jsonValue::asNull()
@@ -143,7 +143,7 @@ const char* jsonFalse::type()
 
 jsonNumber::jsonNumber(double value)
 {
-  @value = value;
+  this->value = value;
 }
 
 void jsonNumber::output(std::ostream& s) { 
@@ -171,12 +171,12 @@ const char* jsonNumber::type()
 
 jsonString::jsonString(std::string& value)
 {
-  @value = value;
+  this->value = value;
 }
 
 jsonString::jsonString(const char* value)
 {
-  @value = value;
+  this->value = value;
 }
 
 jsonString::jsonString(const char* _value, int len) : value(_value, len)
@@ -195,29 +195,29 @@ const char* jsonString::type()
 
 jsonArrayIterator::jsonArrayIterator(jsonArray *array)
 {
-  @array = array;
-  @array->ref_incr();
-  @pos = @array->head;
+  this->array = array;
+  this->array->ref_incr();
+  this->pos = this->array->head;
 }
 
 jsonArrayIterator::~jsonArrayIterator()
 {
-  @array->ref_decr();
+  this->array->ref_decr();
 }
 
 void jsonArrayIterator::next()
 {
-  if (@pos != NULL)
+  if (this->pos != NULL)
   {
-    @pos = @pos->next;
+    this->pos = this->pos->next;
   }
 }
 
 jsonValue *jsonArrayIterator::current()
 {
-  if (@pos != NULL)
+  if (this->pos != NULL)
   {
-    return @pos->value;
+    return this->pos->value;
   }
   else
   {
@@ -227,29 +227,29 @@ jsonValue *jsonArrayIterator::current()
 
 jsonHashIterator::jsonHashIterator(jsonHash *hash)
 {
-  @hash = hash;
-  @hash->ref_incr();
-  @pos = @hash->head;
+  this->hash = hash;
+  this->hash->ref_incr();
+  this->pos = this->hash->head;
 }
 
 jsonHashIterator::~jsonHashIterator()
 {
-  @hash->ref_decr();
+  this->hash->ref_decr();
 }
 
 void jsonHashIterator::next()
 {
-  if (@pos != NULL)
+  if (this->pos != NULL)
   {
-    @pos = @pos->next;
+    this->pos = this->pos->next;
   }
 }
 
 jsonString *jsonHashIterator::current_key()
 {
-  if (@pos != NULL)
+  if (this->pos != NULL)
   {
-    return @pos->key;
+    return this->pos->key;
   }
   else
   {
@@ -259,9 +259,9 @@ jsonString *jsonHashIterator::current_key()
 
 jsonValue *jsonHashIterator::current_value()
 {
-  if (@pos != NULL)
+  if (this->pos != NULL)
   {
-    return @pos->value;
+    return this->pos->value;
   }
   else
   {

@@ -182,7 +182,7 @@ class NeuralEntity
     void        set_id(const char *id);
     Simulator  *get_simulator() const;
     const char *get_id() const;
-    inline simtime get_schedule_at() const { return @schedule_at; }
+    inline simtime get_schedule_at() const { return this->schedule_at; }
 
   protected:
 

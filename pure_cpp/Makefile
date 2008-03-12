@@ -1,6 +1,6 @@
 CC=g++
 #PROFILE=-O0 -pg -g
-CFLAGS=-DNDEBUG -no-integrated-cpp -B ${PWD}/../tools -O3 -Winline -Wall -I${PWD}/src
+CFLAGS=-DNDEBUG -O3 -Winline -Wall -I${PWD}/src
 
 DEPS=src/algo/binary_heap.h src/algo/indexed_binary_heap.h src/memory_allocator.h \
      src/neuron.h src/neuron_srm_01.h src/simulator.h \

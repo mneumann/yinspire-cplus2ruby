@@ -5,25 +5,25 @@
 
 Simulator::Simulator()
 {
-  @schedule_current_time = 0.0;
-  @schedule_step = INFINITY;
-  @schedule_next_step = @schedule_current_time + @schedule_step;
-  @schedule_stepping_list_root = NULL;
-  @stimuli_tolerance = 0.0;
-  @stat_event_counter = 0;
-  @stat_fire_counter = 0;
+  this->schedule_current_time = 0.0;
+  this->schedule_step = INFINITY;
+  this->schedule_next_step = this->schedule_current_time + this->schedule_step;
+  this->schedule_stepping_list_root = NULL;
+  this->stimuli_tolerance = 0.0;
+  this->stat_event_counter = 0;
+  this->stat_fire_counter = 0;
 }
 
 void
 Simulator::entity_register_type(const char *type, entity_factory_t factory)
 {
-  @types[type] = factory;
+  this->types[type] = factory;
 }
 
 NeuralEntity*
 Simulator::entity_allocate(const char* type)
 {
-  entity_factory_t factory = @types[type];
+  entity_factory_t factory = this->types[type];
   return factory();
 }
 
@@ -62,7 +62,7 @@ Simulator::load(const char *filename)
 
     entity->set_id(strdup(id->asString()->value.c_str()));
     entity->set_simulator(this);
-    @entities[entity->get_id()] = entity;
+    this->entities[entity->get_id()] = entity;
 
     entity->load(hash);
   }
@@ -76,7 +76,7 @@ Simulator::load(const char *filename)
     jsonArrayIterator_EACH(conn->asArray(), i)
     {
       std::string &id = i->asString()->value;
-      NeuralEntity *e = @entities[id.c_str()]; 
+      NeuralEntity *e = this->entities[id.c_str()]; 
       if (from == NULL) from = e;
       else from->connect(e);
     } 
@@ -87,7 +87,7 @@ Simulator::load(const char *filename)
    */
   jsonHashIterator_EACH(events, key, val) 
   {
-    NeuralEntity *entity = @entities[key->value.c_str()];
+    NeuralEntity *entity = this->entities[key->value.c_str()];
     jsonArrayIterator_EACH(val->asArray(), e)
     {
       entity->stimulate(e->asNumber()->value, INFINITY, NULL);  
@@ -102,50 +102,50 @@ Simulator::run(simtime stop_at)
 {
   while (true)
   {
-    simtime next_stop = MIN(stop_at, @schedule_next_step);
+    simtime next_stop = MIN(stop_at, this->schedule_next_step);
 
     /* 
      * Calculate all events from the priority queue until the next time
      * step is reached.
      */
-    while (!@schedule_pq.empty())
+    while (!this->schedule_pq.empty())
     {
-      NeuralEntity *top = @schedule_pq.top();
+      NeuralEntity *top = this->schedule_pq.top();
       if (top->get_schedule_at() >= next_stop)
         break;
-      @schedule_current_time = top->get_schedule_at(); 
-      @schedule_pq.pop();
+      this->schedule_current_time = top->get_schedule_at(); 
+      this->schedule_pq.pop();
       top->process(top->get_schedule_at());
     }
 
-    if (@schedule_current_time >= stop_at)
+    if (this->schedule_current_time >= stop_at)
       break;
 
-    if (@schedule_stepping_list_root == NULL && @schedule_pq.empty())
+    if (this->schedule_stepping_list_root == NULL && this->schedule_pq.empty())
       break;
 
     /* 
      * Calculate the entities that require stepped processing.
      */ 
-    @schedule_current_time = @schedule_next_step; 
+    this->schedule_current_time = this->schedule_next_step; 
 
-    if (@schedule_stepping_list_root != NULL)
+    if (this->schedule_stepping_list_root != NULL)
     {
       // FIXME: collect all entities in an array. then process them.
     }
 
-    @schedule_next_step += @schedule_step;
+    this->schedule_next_step += this->schedule_step;
   }
 }
 
 void
 Simulator::schedule_update(NeuralEntity *entity)
 {
-  @schedule_pq.update(entity);
+  this->schedule_pq.update(entity);
 }
 
 void
 Simulator::stat_record_fire_event(simtime at, NeuralEntity *source)
 {
-  ++@stat_fire_counter;
+  ++this->stat_fire_counter;
 }

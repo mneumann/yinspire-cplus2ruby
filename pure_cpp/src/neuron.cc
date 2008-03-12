@@ -6,12 +6,12 @@
 
 Neuron::Neuron()
 {
-  @first_pre_synapse = NULL;
-  @first_post_synapse = NULL;
-  @abs_refr_duration = 0.0;
-  @last_spike_time = -INFINITY; 
-  @last_fire_time = -INFINITY; 
-  @hebb = false;
+  this->first_pre_synapse = NULL;
+  this->first_post_synapse = NULL;
+  this->abs_refr_duration = 0.0;
+  this->last_spike_time = -INFINITY; 
+  this->last_fire_time = -INFINITY; 
+  this->hebb = false;
 }
 
 void
@@ -24,16 +24,16 @@ Neuron::load(jsonHash *data)
 {
   super::load(data);
 
-  @abs_refr_duration = data->get_number("abs_refr_duration", 0.0);
-  @last_spike_time = data->get_number("last_spike_time", -INFINITY);
-  @last_fire_time = data->get_number("last_fire_time", -INFINITY);
-  @hebb = data->get_bool("hebb", false);
+  this->abs_refr_duration = data->get_number("abs_refr_duration", 0.0);
+  this->last_spike_time = data->get_number("last_spike_time", -INFINITY);
+  this->last_fire_time = data->get_number("last_fire_time", -INFINITY);
+  this->hebb = data->get_bool("hebb", false);
 }
  
 void
 Neuron::each_connection(void (*yield)(NeuralEntity *self, NeuralEntity *conn))
 {
-  for (Synapse *syn = @first_post_synapse; syn != NULL;
+  for (Synapse *syn = this->first_post_synapse; syn != NULL;
       syn = syn->next_post_synapse)
   {
     yield(this, syn);
@@ -59,8 +59,8 @@ Neuron::connect(NeuralEntity *target)
   if (syn->pre_neuron != NULL || syn->next_post_synapse != NULL)
     throw "Synapse already connected";
 
-  syn->next_post_synapse = @first_post_synapse;
-  @first_post_synapse = syn;
+  syn->next_post_synapse = this->first_post_synapse;
+  this->first_post_synapse = syn;
   syn->pre_neuron = this;
 }
 
@@ -79,7 +79,7 @@ Neuron::disconnect(NeuralEntity *target)
    * Find the synapse in the linked list that precedes +syn+.
    */
   Synapse *prev = NULL;
-  Synapse *curr = @first_post_synapse;
+  Synapse *curr = this->first_post_synapse;
 
   while (true)
   {
@@ -100,8 +100,8 @@ Neuron::disconnect(NeuralEntity *target)
     /*
      * syn is the last synapse in the post synapse list.
      */
-    assert(@first_post_synapse == syn);
-    @first_post_synapse = NULL; 
+    assert(this->first_post_synapse == syn);
+    this->first_post_synapse = NULL; 
   }
   else
   {
@@ -120,15 +120,15 @@ Neuron::disconnect(NeuralEntity *target)
 void
 Neuron::fire_synapses(simtime at)
 {
-  if (@hebb) 
+  if (this->hebb) 
   {
-    for (Synapse *syn = @first_pre_synapse; syn != NULL;
+    for (Synapse *syn = this->first_pre_synapse; syn != NULL;
         syn = syn->next_pre_synapse)
     {
       syn->stimulate(at, 0.0, this);
     }
   }
-  for (Synapse *syn = @first_post_synapse; syn != NULL;
+  for (Synapse *syn = this->first_post_synapse; syn != NULL;
       syn = syn->next_post_synapse)
   {
     syn->stimulate(at, 0.0, this);

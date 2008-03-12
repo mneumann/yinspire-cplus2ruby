@@ -79,7 +79,7 @@ class IndexedBinaryHeap : public BinaryHeap<E, Alloc, Acc, BinaryHeapIndexer<E, 
         else
         {
           // FIXME: use propagate up/down instead
-          Idx::index_changed(@elements[i], 0);  // detach from heap
+          Idx::index_changed(this->elements[i], 0);  // detach from heap
           I bubble = super::move_bubble_down(i);
           super::insert_and_bubble_up(bubble, element); 
         }

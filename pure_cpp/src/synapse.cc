@@ -4,12 +4,12 @@
 
 Synapse::Synapse()
 {
-  @weight = 0.0;
-  @delay = 0.0;
-  @pre_neuron = NULL;
-  @post_neuron = NULL;
-  @next_pre_synapse = NULL;
-  @next_post_synapse = NULL;
+  this->weight = 0.0;
+  this->delay = 0.0;
+  this->pre_neuron = NULL;
+  this->post_neuron = NULL;
+  this->next_pre_synapse = NULL;
+  this->next_post_synapse = NULL;
 }
 
 void
@@ -22,8 +22,8 @@ Synapse::load(jsonHash *data)
 {
   super::load(data);
 
-  @weight = data->get_number("weight", 0.0);
-  @delay = data->get_number("delay", 0.0);
+  this->weight = data->get_number("weight", 0.0);
+  this->delay = data->get_number("delay", 0.0);
 }
 
 
@@ -37,9 +37,9 @@ Synapse::stimulate(simtime at, real weight, NeuralEntity *source)
    *
    * We ignore the weight parameter that is passed by the Neuron.
    */ 
-  if (source != @post_neuron)
+  if (source != this->post_neuron)
   {
-    @post_neuron->stimulate(at + @delay, @weight, this);
+    this->post_neuron->stimulate(at + this->delay, this->weight, this);
   }
 }
 
@@ -54,12 +54,12 @@ Synapse::connect(NeuralEntity *target)
 {
   Neuron *neuron = dynamic_cast<Neuron*>(target);
 
-  if (@post_neuron != NULL || @next_pre_synapse != NULL)
+  if (this->post_neuron != NULL || this->next_pre_synapse != NULL)
     throw "Synapse already connected";
 
-  @next_pre_synapse = neuron->first_pre_synapse;
+  this->next_pre_synapse = neuron->first_pre_synapse;
   neuron->first_pre_synapse = this;
-  @post_neuron = neuron;
+  this->post_neuron = neuron;
 }
 
 /*
@@ -70,7 +70,7 @@ Synapse::disconnect(NeuralEntity *target)
 {
   Neuron *neuron = dynamic_cast<Neuron*>(target);
 
-  if (@post_neuron != neuron)
+  if (this->post_neuron != neuron)
     throw "Synapse not connected to this Neuron";
 
   /*
@@ -103,15 +103,15 @@ Synapse::disconnect(NeuralEntity *target)
   }
   else
   {
-    prev->next_pre_synapse = @next_pre_synapse;
+    prev->next_pre_synapse = this->next_pre_synapse;
   }
 
-  @post_neuron = NULL;
-  @next_pre_synapse = NULL;
+  this->post_neuron = NULL;
+  this->next_pre_synapse = NULL;
 }
 
 void
 Synapse::each_connection(void (*yield)(NeuralEntity *self, NeuralEntity *conn))
 {
-  yield(this, @post_neuron);
+  yield(this, this->post_neuron);
 }

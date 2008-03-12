@@ -4,13 +4,13 @@
 
 NeuralEntity::NeuralEntity()
 {
-  @simulator = NULL;
-  @id = NULL;
-  @schedule_index = 0;
-  @schedule_at = INFINITY;
-  @schedule_stepping_list_prev = NULL;
-  @schedule_stepping_list_next = NULL;
-  @schedule_stepping_list_internal_next = NULL;
+  this->simulator = NULL;
+  this->id = NULL;
+  this->schedule_index = 0;
+  this->schedule_at = INFINITY;
+  this->schedule_stepping_list_prev = NULL;
+  this->schedule_stepping_list_next = NULL;
+  this->schedule_stepping_list_internal_next = NULL;
 }
 
 NeuralEntity::~NeuralEntity()
@@ -43,20 +43,20 @@ NeuralEntity::disconnect_all()
 void
 NeuralEntity::schedule(simtime at)
 {
-  // FIXME: make sure that @schedule_at is reset
+  // FIXME: make sure that this->schedule_at is reset
   // when the entity is removed from the pq.
-  if (@schedule_at != at)
+  if (this->schedule_at != at)
   {
-    @schedule_at = at;
-    @simulator->schedule_update(this);
+    this->schedule_at = at;
+    this->simulator->schedule_update(this);
   }
 }
 
 inline bool
 NeuralEntity::schedule_stepping_enabled()
 {
-  return (@schedule_stepping_list_prev != NULL && 
-          @schedule_stepping_list_next != NULL);
+  return (this->schedule_stepping_list_prev != NULL && 
+          this->schedule_stepping_list_next != NULL);
 }
 
 void
@@ -64,19 +64,19 @@ NeuralEntity::schedule_enable_stepping()
 {
   if (!schedule_stepping_enabled())
   {
-    NeuralEntity*& root = @simulator->schedule_stepping_list_root; 
+    NeuralEntity*& root = this->simulator->schedule_stepping_list_root; 
     if (root != NULL)
     {
-      @schedule_stepping_list_prev = root;
-      @schedule_stepping_list_next = root->schedule_stepping_list_next;
+      this->schedule_stepping_list_prev = root;
+      this->schedule_stepping_list_next = root->schedule_stepping_list_next;
       root->schedule_stepping_list_next = this; 
-      @schedule_stepping_list_next->schedule_stepping_list_prev = this; 
+      this->schedule_stepping_list_next->schedule_stepping_list_prev = this; 
     }
     else
     {
       root = this; 
-      @schedule_stepping_list_prev = this;
-      @schedule_stepping_list_next = this;
+      this->schedule_stepping_list_prev = this;
+      this->schedule_stepping_list_next = this;
     }
   }
 }
@@ -86,19 +86,19 @@ NeuralEntity::schedule_disable_stepping()
 {
   if (schedule_stepping_enabled())
   {
-    if (@schedule_stepping_list_prev != @schedule_stepping_list_next)
+    if (this->schedule_stepping_list_prev != this->schedule_stepping_list_next)
     {
-      @schedule_stepping_list_prev->schedule_stepping_list_next = @schedule_stepping_list_next; 
-      @schedule_stepping_list_next->schedule_stepping_list_prev = @schedule_stepping_list_prev;  
+      this->schedule_stepping_list_prev->schedule_stepping_list_next = this->schedule_stepping_list_next; 
+      this->schedule_stepping_list_next->schedule_stepping_list_prev = this->schedule_stepping_list_prev;  
     }
     else
     {
       /*
        * We are the last entity in the stepping list.
        */
-      @simulator->schedule_stepping_list_root = NULL;
-      @schedule_stepping_list_prev = NULL;
-      @schedule_stepping_list_next = NULL;
+      this->simulator->schedule_stepping_list_root = NULL;
+      this->schedule_stepping_list_prev = NULL;
+      this->schedule_stepping_list_next = NULL;
     }
   }
 }
@@ -124,13 +124,13 @@ void
 NeuralEntity::stimuli_add(simtime at, real weight)
 {
   Stimulus s; s.at = at; s.weight = weight;
-  if (@simulator->stimuli_tolerance >= 0.0)
+  if (this->simulator->stimuli_tolerance >= 0.0)
   {
     //find_parent
-    if (@stimuli_pq.accumulate(s, stimuli_accum, &@simulator->stimuli_tolerance)) return;
+    if (this->stimuli_pq.accumulate(s, stimuli_accum, &this->simulator->stimuli_tolerance)) return;
   }
-  @stimuli_pq.push(s);
-  schedule(@stimuli_pq.top().at);
+  this->stimuli_pq.push(s);
+  schedule(this->stimuli_pq.top().at);
 }
 
 real
@@ -138,19 +138,19 @@ NeuralEntity::stimuli_sum(simtime until)
 {
   real weight = 0.0;
 
-  while (!@stimuli_pq.empty() && @stimuli_pq.top().at <= until)
+  while (!this->stimuli_pq.empty() && this->stimuli_pq.top().at <= until)
   {
-    weight += @stimuli_pq.top().weight;
-    @stimuli_pq.pop();
+    weight += this->stimuli_pq.top().weight;
+    this->stimuli_pq.pop();
   }
 
   /*
    * NOTE: we don't have to remove the entity from the schedule if the
    * pq is empty.
    */
-  if (!@stimuli_pq.empty())
+  if (!this->stimuli_pq.empty())
   {
-    schedule(@stimuli_pq.top().at);
+    schedule(this->stimuli_pq.top().at);
   }
 
   return weight;
@@ -162,22 +162,22 @@ NeuralEntity::stimuli_sum_inf(simtime until, bool &is_inf)
   real weight = 0.0;
   is_inf = false;
 
-  while (!@stimuli_pq.empty() && @stimuli_pq.top().at <= until)
+  while (!this->stimuli_pq.empty() && this->stimuli_pq.top().at <= until)
   {
-    if (isinf(@stimuli_pq.top().weight))
+    if (isinf(this->stimuli_pq.top().weight))
     {
       is_inf = true;
     }
     else
     {
-      weight += @stimuli_pq.top().weight;
+      weight += this->stimuli_pq.top().weight;
     }
-    @stimuli_pq.pop();
+    this->stimuli_pq.pop();
   }
 
-  if (!@stimuli_pq.empty())
+  if (!this->stimuli_pq.empty())
   {
-    schedule(@stimuli_pq.top().at);
+    schedule(this->stimuli_pq.top().at);
   }
 
   return weight;
@@ -186,23 +186,23 @@ NeuralEntity::stimuli_sum_inf(simtime until, bool &is_inf)
 void
 NeuralEntity::set_simulator(Simulator *simulator)
 {
-  @simulator = simulator;
+  this->simulator = simulator;
 }
 
 Simulator *
 NeuralEntity::get_simulator() const
 {
-  return @simulator; 
+  return this->simulator; 
 }
 
 void
 NeuralEntity::set_id(const char *id)
 {
-  @id = id;
+  this->id = id;
 }
 
 const char *
 NeuralEntity::get_id() const
 {
-  return @id;
+  return this->id;
 }
