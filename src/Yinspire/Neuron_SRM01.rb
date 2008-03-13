@@ -1,7 +1,7 @@
 #
 # Formerly known as KernelbasedLIF
 #
-class Neuron_SRM_01 < Neuron
+class Neuron_SRM01 < Neuron
 
   property :tau_m,           'real', :marshal => true
   property :tau_ref,         'real', :marshal => true

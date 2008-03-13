@@ -37,10 +37,10 @@ class NeuralEntity; cplus2ruby end
 class Neuron < NeuralEntity; end
 class Synapse < NeuralEntity; end
 
-require 'yinspire/simulator'
-require 'yinspire/neural_entity'
-require 'yinspire/neuron'
-require 'yinspire/synapse'
+require 'Yinspire/Simulator'
+require 'Yinspire/NeuralEntity'
+require 'Yinspire/Neuron'
+require 'Yinspire/Synapse'
 
 YINSPIRE_ROOT = File.expand_path(File.join(File.dirname(__FILE__), ".."))
 YINSPIRE_WORK = File.join(YINSPIRE_ROOT, "work")
@@ -52,7 +52,7 @@ module Yinspire
              "-I#{YINSPIRE_ROOT}/src -I${PWD}"
     ldflags = "-lstdc++"
 
-    Cplus2Ruby.startup("#{YINSPIRE_WORK}/yinspire", force_compilation,
+    Cplus2Ruby.startup("#{YINSPIRE_WORK}/Yinspire", force_compilation,
                        cflags, ldflags)
     #gen_load_dump()
   end

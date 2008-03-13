@@ -1,6 +1,6 @@
 class Simulator
 
-  require 'yinspire/scheduling/simulator'
+  require 'Yinspire/Scheduling/Simulator'
 
   #
   # The tolerance (time difference) up to which local stimuli are

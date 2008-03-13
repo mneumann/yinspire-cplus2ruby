@@ -1,4 +1,4 @@
-require 'yinspire/stimuli'
+require 'Yinspire/Stimuli'
 
 class Neuron_Base < Neuron
 

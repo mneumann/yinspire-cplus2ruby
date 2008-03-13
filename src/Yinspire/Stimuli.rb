@@ -1,4 +1,4 @@
-require 'yinspire/stimulus'
+require 'Yinspire/Stimulus'
 
 #
 # Module contains code to store local stimuli in a priority queue. Used

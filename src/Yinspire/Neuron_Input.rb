@@ -2,9 +2,9 @@
 # Input Neuron. Simply forwards stimuli.
 #
 
-require 'yinspire/neuron_input_output'
+require 'Yinspire/Neuron_InputOutput'
 
-class Neuron_Input < Neuron_Input_Output
+class Neuron_Input < Neuron_InputOutput
 
   method :fire, {:at => 'simtime'},{:weight => 'real'}, %{
     stimulate_synapses(at, weight);

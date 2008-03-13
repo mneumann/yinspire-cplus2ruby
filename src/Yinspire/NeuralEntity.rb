@@ -4,7 +4,7 @@
 #
 class NeuralEntity
 
-  require 'yinspire/scheduling/neural_entity'
+  require 'Yinspire/Scheduling/NeuralEntity'
 
   def initialize(id=nil, simulator=nil, &block)
     self.id = id
