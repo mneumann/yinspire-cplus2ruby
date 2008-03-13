@@ -2,8 +2,8 @@ $LOAD_PATH.unshift "src"
 $LOAD_PATH.unshift "tools"
 
 require 'Yinspire'
-require 'Yinspire/Neuron_Input'
-require 'Yinspire/Neuron_Output'
+require 'Yinspire/Models/Neuron_Input'
+require 'Yinspire/Models/Neuron_Output'
 
 Yinspire.startup
 

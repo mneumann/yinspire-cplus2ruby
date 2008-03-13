@@ -1,4 +1,4 @@
-require 'Yinspire/Neuron_Base'
+require 'Yinspire/Models/Neuron_Base'
 
 #
 # Common base class for input and output neurons. They behave almost

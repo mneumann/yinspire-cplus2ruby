@@ -1,7 +1,9 @@
+require 'Yinspire/Models/Neuron_Base'
+
 #
 # Formerly known as KernelbasedLIF
 #
-class Neuron_SRM01 < Neuron
+class Neuron_SRM01 < Neuron_Base
 
   property :tau_m,           'real', :marshal => true
   property :tau_ref,         'real', :marshal => true

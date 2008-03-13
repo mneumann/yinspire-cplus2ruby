@@ -1,3 +1,5 @@
+require 'Yinspire/Core/NeuralEntity'
+
 #
 # Extends class Simulator for methods related to 
 # scheduling.

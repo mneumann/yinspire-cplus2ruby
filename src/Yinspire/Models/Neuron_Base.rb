@@ -1,8 +1,9 @@
-require 'Yinspire/Stimuli'
+require 'Yinspire/Core/Neuron'
+require 'Yinspire/Core/StimuliMixin'
 
 class Neuron_Base < Neuron
 
-  include Stimuli
+  include StimuliMixin
   
   #
   # Duration of the absolute refraction period.

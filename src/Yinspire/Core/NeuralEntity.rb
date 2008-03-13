@@ -1,10 +1,11 @@
+require 'Yinspire/Core/Simulator'
+require 'Yinspire/Core/Scheduling/NeuralEntity'
+
 #
 # NeuralEntity is the base class of all entities in a neural net, i.e.
 # Neurons and Synapses.
 #
 class NeuralEntity
-
-  require 'Yinspire/Scheduling/NeuralEntity'
 
   def initialize(id=nil, simulator=nil, &block)
     self.id = id

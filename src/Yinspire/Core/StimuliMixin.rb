@@ -1,10 +1,10 @@
-require 'Yinspire/Stimulus'
+require 'Yinspire/Core/Stimulus'
 
 #
 # Module contains code to store local stimuli in a priority queue. Used
 # by several Neuron models.
 #
-module Stimuli; cplus2ruby
+module StimuliMixin; cplus2ruby
 
   #
   # Each NeuralEntity has it's own local stimuli priority queue.

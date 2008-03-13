@@ -1,6 +1,7 @@
-class Simulator
+require 'Yinspire/Core/NeuralEntity'
+require 'Yinspire/Core/Scheduling/Simulator'
 
-  require 'Yinspire/Scheduling/Simulator'
+class Simulator
 
   #
   # The tolerance (time difference) up to which local stimuli are

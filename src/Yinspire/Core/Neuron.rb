@@ -1,3 +1,6 @@
+require 'Yinspire/Core/NeuralEntity'
+require 'Yinspire/Core/Synapse'
+
 #
 # Base class of all Neurons. Defines the structure that is special for a
 # Neuron, i.e. that a Neuron has pre- and post-Synapses.
