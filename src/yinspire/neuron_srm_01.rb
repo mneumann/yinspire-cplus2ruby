@@ -45,7 +45,7 @@ class Neuron_SRM_01 < Neuron
     @simulator->record_fire_event(at, this);
     @mem_pot = 0.0;
     @last_fire_time = at;
-    fire_synapses(at, 0.0);
+    stimulate_synapses(at, 0.0);
   }, :inline => true
 
 end

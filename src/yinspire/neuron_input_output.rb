@@ -1,8 +1,10 @@
+require 'yinspire/neuron_base'
+
 #
 # Common base class for input and output neurons. They behave almost
 # the same except for what action is performed once a neuron fires.
 #
-class Neuron_Input_Output < Neuron
+class Neuron_Input_Output < Neuron_Base
 
   virtual :fire
   method :fire, {:at => 'simtime'},{:weight => 'real'}, nil 
