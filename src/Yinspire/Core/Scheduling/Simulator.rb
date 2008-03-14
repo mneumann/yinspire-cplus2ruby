@@ -24,7 +24,16 @@ class Simulator
   #
   # Priority queue used to schedule the entities.
   #
-  property :schedule_pq, 'IndexedBinaryHeap<NeuralEntity*, MemoryAllocator<NeuralEntity*>, NeuralEntity>'
+  property :schedule_pq, 'IndexedBinaryHeap<NeuralEntity*, MemoryAllocator<NeuralEntity*>, NeuralEntity>',
+    :mark => 'mark_schedule_pq()'
+
+  method :mark_schedule_pq, {}, %{
+    @schedule_pq.each(Simulator::mark_schedule_pq_iter, NULL);
+  }
+ 
+  static_method :mark_schedule_pq_iter, {:s => 'NeuralEntity* const&'}, {:ptr => 'void*'}, %{
+    if (s) rb_gc_mark(s->__obj__);
+  }
 
   #
   # If stepped scheduling is used, this points to the first entiy in the

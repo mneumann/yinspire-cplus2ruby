@@ -5,6 +5,7 @@ require 'cplus2ruby'
 Cplus2Ruby.add_type_alias 'real'  => 'float'
 Cplus2Ruby.add_type_alias 'simtime' => 'float'
 Cplus2Ruby.add_type_alias 'uint'  => 'unsigned int'
+Cplus2Ruby.settings :default_body_when_nil => 'THROW("abstract method");'
 
 Infinity = 1.0/0.0
 
@@ -42,19 +43,13 @@ require 'Yinspire/Core/NeuralEntity'
 require 'Yinspire/Core/Neuron'
 require 'Yinspire/Core/Synapse'
 
-YINSPIRE_ROOT = File.expand_path(File.join(File.dirname(__FILE__), ".."))
-YINSPIRE_WORK = File.join(YINSPIRE_ROOT, "work")
-
 module Yinspire
+  ROOT = File.expand_path(File.join(File.dirname(__FILE__), ".."))
 
-  def self.startup(force_compilation=false)
-    cflags = "-DNDEBUG -O3 -fomit-frame-pointer -Winline -Wall " + 
-             "-I#{YINSPIRE_ROOT}/src -I${PWD}"
-    ldflags = "-lstdc++"
-
-    Cplus2Ruby.startup("#{YINSPIRE_WORK}/Yinspire", force_compilation,
-                       cflags, ldflags)
-    #gen_load_dump()
+  def self.startup(file, force_compilation=false)
+    cflags = "-DNDEBUG -O3 -fomit-frame-pointer -Winline -Wall -I#{ROOT}/src -I${PWD}"
+    ldflags = ""
+    Cplus2Ruby.startup(file, force_compilation, cflags, ldflags)
   end
 
 end # module Yinspire

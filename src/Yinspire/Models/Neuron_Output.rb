@@ -5,8 +5,11 @@ require 'Yinspire/Models/Neuron_InputOutput'
 #
 class Neuron_Output < Neuron_InputOutput
 
-  method :fire, {:at => 'simtime'},{:weight => 'real'}, %{
-    printf("Neuron %s fired at %f with %f\\n", RSTRING(@id)->ptr, at, weight);
-  }
+  stub_method :fire, {:at => 'simtime'},{:weight => 'real'}
 
+  #
+  # Overwrite
+  #
+  def fire(at, weight) end
+ 
 end

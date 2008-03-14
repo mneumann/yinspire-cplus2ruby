@@ -39,15 +39,11 @@ class Neuron_SRM01 < Neuron_Base
 
     if (@mem_pot >= @const_threshold + dynamic_threshold)
     {
-      fire(at);
+      /* Fire */
+      @mem_pot = 0.0;
+      @last_fire_time = at;
+      stimulate_synapses(at, 0.0);
     }
   }
-
-  method :fire, {:at => 'simtime'}, %{
-    @simulator->record_fire_event(at, this);
-    @mem_pot = 0.0;
-    @last_fire_time = at;
-    stimulate_synapses(at, 0.0);
-  }, :inline => true
 
 end
