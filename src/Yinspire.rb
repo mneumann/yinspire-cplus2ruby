@@ -1,5 +1,3 @@
-require 'rubygems' # for facets
-$LOAD_PATH.unshift File.expand_path(File.join(File.dirname(__FILE__), "../../cplus2ruby/src"))
 require 'cplus2ruby'
 
 Cplus2Ruby.add_type_alias 'real'  => 'float'
@@ -12,6 +10,7 @@ Infinity = 1.0/0.0
 Cplus2Ruby << %{
   #include <assert.h>
   #include <math.h>
+  #include "algo/Array.h"
   #include "algo/binary_heap.h"
   #include "algo/indexed_binary_heap.h"
   #include "alloc/ruby_memory_allocator.h"

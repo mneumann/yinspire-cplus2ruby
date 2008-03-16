@@ -1,9 +1,11 @@
+require 'rubygems'
 $LOAD_PATH.unshift "src"
 
 require 'Yinspire'
 require 'Yinspire/Models/Neuron_Input'
 require 'Yinspire/Models/Neuron_Output'
 require 'Yinspire/Models/Neuron_SRM01'
+require 'Yinspire/Models/Synapse_Hebb'
 require 'Yinspire/Loaders/Loader_Json'
 
 def example_net(sim, n)
