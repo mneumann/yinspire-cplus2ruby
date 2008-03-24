@@ -39,12 +39,13 @@ class NeuralEntity
   property :schedule_stepping_list_internal_next, NeuralEntity
 
   #
-  # Schedule the entity at a specific time.
+  # Schedule the entity at a specific time. Only schedule if the new
+  # schedule time is before the current schedule time.
   #
   method :schedule, {:at => 'simtime'}, %{
     // FIXME: make sure that @schedule_at is 
     // reset when entity is removed from pq!
-    if (@schedule_at != at)
+    if (at < @schedule_at)
     {
       @schedule_at = at;
       @simulator->schedule_update(this);
