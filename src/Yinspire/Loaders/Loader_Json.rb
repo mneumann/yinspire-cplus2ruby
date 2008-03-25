@@ -25,7 +25,7 @@ class Loader_Json < Loader
 
       hash.update(data) if data
 
-      @entities[id] = allocate_entity(type, id, hash)
+      create_entity(type, id, hash)
 
       hash.clear
     end

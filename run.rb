@@ -8,6 +8,7 @@ require 'Yinspire/Models/Neuron_SRM01'
 require 'Yinspire/Models/Neuron_SRM02'
 require 'Yinspire/Models/Synapse_Hebb'
 require 'Yinspire/Loaders/Loader_Json'
+require 'Yinspire/Loaders/Loader_GraphML'
 
 def example_net(sim, n)
   inputs = (0...n).map {|i|
@@ -46,8 +47,8 @@ class Neuron_Output
   end
 end
 
-#Loader_Json.new(sim).load('/tmp/gereon2005.json')
-example_net(sim, 10_000)
+Loader_GraphML.new(sim).load('examples/nets/skorpion.graphml')
+#example_net(sim, 10_000)
 
 stop_at = ARGV[0].to_f 
 puts "stop_at: #{stop_at}"
