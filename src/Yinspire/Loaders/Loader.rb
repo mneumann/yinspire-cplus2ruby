@@ -8,30 +8,19 @@
 #
 class Loader
 
+  attr_accessor :entities
+
   def initialize(simulator)
     @entities = Hash.new
     @simulator = simulator
+  end
 
-    #
-    # initialize annotation cache
-    #
-    @ann_cache = {}
-    Cplus2Ruby.model.entities.each do |klass|
-      @ann_cache[klass] = {} 
-      klass.recursive_annotations.each {|name, h|
-        next unless h[:marshal]
-        @ann_cache[klass][name.to_sym] = 
-        @ann_cache[klass][name.to_s] = "#{name}="
-      }
-    end
-
-    #
-    # Collect valid entity classes.
-    #
-    @entity_classes = {}
-    ObjectSpace.each_object(Class) {|klass|
-      @entity_classes[klass.name] = klass if klass.ancestors.include?(NeuralEntity)
+  def dump_entities
+    entities = {}
+    @entities.each {|id, entity|
+      entities[id] = [entity.entity_type || raise, entity.dump]  
     }
+    entities
   end
 
   protected
@@ -43,19 +32,10 @@ class Loader
   # Argument +data+ is a hash that contains the property values.
   #
   def create_entity(entity_type, id, data)
-    entity_class = @entity_classes[entity_type] || raise(ArgumentError)
-    entity = entity_class.new
-    entity.id = id
-    entity.simulator = @simulator
-    load_entity(entity_class, entity, data)
+    entity = NeuralEntity.new_from_name(entity_type, id, @simulator)
+    entity.load(data)
+    raise if @entities[id]
     @entities[id] = entity
-  end
-
-  def load_entity(klass, entity, data)
-    data.each do |key, val|
-      meth = @ann_cache[klass][key]
-      entity.send(meth, val) if meth
-    end
   end
 
 end

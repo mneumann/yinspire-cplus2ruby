@@ -34,7 +34,7 @@ Simulator::load(const char *filename)
 
   std::string format = data->get("format")->asString()->value;
 
-  if (format != "yinspire.2")
+  if (format != "yinspire.c")
   {
     throw "unrecognized data format";
   }

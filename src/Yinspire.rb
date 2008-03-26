@@ -45,10 +45,24 @@ require 'Yinspire/Core/Synapse'
 module Yinspire
   ROOT = File.expand_path(File.join(File.dirname(__FILE__), ".."))
 
-  def self.startup(file, force_compilation=false)
+  def self.commit(file, force_compilation=false)
     cflags = "-DNDEBUG -O3 -fomit-frame-pointer -Winline -Wall -I#{ROOT}/src -I${PWD}"
     ldflags = ""
     Cplus2Ruby.startup(file, force_compilation, cflags, ldflags)
+
+    Cplus2Ruby.model.entities.each do |klass|
+      next unless klass.ancestors.include?(NeuralEntity) 
+      NeuralEntity.entity_type_map[klass.name] = klass 
+      NeuralEntity.entity_type_map_reverse[klass] = klass.name
+      lc = NeuralEntity.entity_ann_load_cache[klass] = Hash.new
+      dc = NeuralEntity.entity_ann_dump_cache[klass] = Array.new
+
+      klass.recursive_annotations.each {|name, h|
+        next unless h[:marshal]
+        lc[name.to_sym] = lc[name.to_s] = :"#{name}="
+        dc << name.to_sym 
+      }
+    end
   end
 
 end # module Yinspire

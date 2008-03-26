@@ -7,8 +7,9 @@ require 'Yinspire/Models/Neuron_Output'
 require 'Yinspire/Models/Neuron_SRM01'
 require 'Yinspire/Models/Neuron_SRM02'
 require 'Yinspire/Models/Synapse_Hebb'
-require 'Yinspire/Loaders/Loader_Json'
+require 'Yinspire/Loaders/Loader_JSON'
 require 'Yinspire/Loaders/Loader_GraphML'
+require 'Yinspire/Loaders/Loader_Yin'
 
 def example_net(sim, n)
   inputs = (0...n).map {|i|
@@ -36,7 +37,7 @@ def example_net(sim, n)
   }
 end
 
-Yinspire.startup('./work/Yinspire')
+Yinspire.commit('./work/Yinspire')
 
 sim = Simulator.new
 sim.stimuli_tolerance = 0.0 
@@ -47,7 +48,17 @@ class Neuron_Output
   end
 end
 
-Loader_GraphML.new(sim).load('examples/nets/skorpion.graphml')
+#loader = Loader_GraphML.new(sim)
+#loader.load('examples/nets/skorpion.graphml')
+
+#loader = Loader_JSON.new(sim)
+#loader.load('/tmp/gereon2005.json')
+
+loader = Loader_Yin.new(sim)
+loader.load('./examples/nets/gereon2005.yin')
+
+#require 'pp'
+#pp loader.dump_entities
 #example_net(sim, 10_000)
 
 stop_at = ARGV[0].to_f 

@@ -7,6 +7,58 @@ require 'Yinspire/Core/Scheduling/NeuralEntity'
 #
 class NeuralEntity
 
+  #
+  # Entity type name to class mapping. 
+  #
+  @@entity_type_map = Hash.new
+  def self.entity_type_map() @@entity_type_map end
+
+
+  #
+  # Entity class to type name mapping.
+  #
+  @@entity_type_map_reverse = Hash.new
+  def self.entity_type_map_reverse() @@entity_type_map_reverse end
+
+  def entity_type() @@entity_type_map_reverse[self.class] end
+
+  #
+  # Annotation cache for loading entities.
+  #
+  @@entity_ann_load_cache = Hash.new
+  def self.entity_ann_load_cache() @@entity_ann_load_cache end
+
+  #
+  # Annotation cache for dumping entities.
+  #
+  @@entity_ann_dump_cache = Hash.new
+  def self.entity_ann_dump_cache() @@entity_ann_dump_cache end
+
+  def self.new_from_name(name, *args, &block)
+    (@@entity_type_map[name] || raise(ArgumentError)).new(*args, &block)
+  end
+
+  def self.class_from_name(name)
+    (@@entity_type_map[name] || raise(ArgumentError))
+  end
+
+  def load(hash)
+    a = @@entity_ann_load_cache[self.class]
+    hash.each {|key, value|
+      if meth = a[key]
+        send(meth, value)
+      end
+    }
+  end
+
+  def dump
+    hash = Hash.new
+    @@entity_ann_dump_cache[self.class].each {|key|
+      hash[key] = send(key)
+    }
+    hash
+  end
+
   def initialize(id=nil, simulator=nil, &block)
     self.id = id
     self.simulator = simulator
