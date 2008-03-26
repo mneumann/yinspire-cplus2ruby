@@ -44,11 +44,12 @@ require 'Yinspire/Core/Synapse'
 
 module Yinspire
   ROOT = File.expand_path(File.join(File.dirname(__FILE__), ".."))
+  LIB_DIR = File.expand_path(File.dirname(__FILE__))
 
   def self.commit(file, force_compilation=false)
-    cflags = "-DNDEBUG -O3 -fomit-frame-pointer -Winline -Wall -I#{ROOT}/src -I${PWD}"
+    cflags = "-DNDEBUG -O3 -fomit-frame-pointer -Winline -Wall -I#{LIB_DIR} -I${PWD}"
     ldflags = ""
-    Cplus2Ruby.startup(file, force_compilation, cflags, ldflags)
+    Cplus2Ruby.commit(file, force_compilation, cflags, ldflags)
 
     Cplus2Ruby.model.entities.each do |klass|
       next unless klass.ancestors.include?(NeuralEntity) 

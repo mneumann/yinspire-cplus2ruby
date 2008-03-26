@@ -1,0 +1,104 @@
+#!/usr/local/bin/ruby
+
+# TODO: Dump at the end.
+
+begin
+  require 'rubygems'
+rescue LoadError
+end
+
+begin
+  require 'Yinspire'
+rescue LoadError
+  $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '../lib'))
+  require 'Yinspire'
+end
+require 'Yinspire/All'
+
+def parse_cmdline
+  require 'optparse'
+  require 'ostruct'
+
+  options = OpenStruct.new 
+  options.current_format = :yin
+  options.stop_at = Infinity
+  options.tolerance = 0.0
+  options.output = nil
+  options.inputs = []
+  options.tmp = "/tmp/Yinspire"
+
+  opts = OptionParser.new do |opts|
+    opts.banner = "Usage: yinspire [options] [file] [options] [file] ..."
+
+    opts.on("-s", "--stop-at N", Float, "Stop simulation at N (default: #{options.stop_at})") do |n|
+      options.stop_at = n
+    end
+
+    opts.on("--tolerance N", Float, "Stimuli tolerance (default: #{options.tolerance})") do |n|
+      options.tolerance = n
+    end
+
+    opts.on("-f", "--format FORMAT", [:yin, :json, :graphml],
+            "Select format type of input files",
+            "  (yin, json, graphml)") do |t|
+      options.current_format = t
+    end
+
+    opts.on("-o", "--output FILE", "Filename to write output to",
+                                   "  (default: stdout)") do |out|
+      raise "only one output allowed" if options.output
+      options.output = out
+    end
+
+    opts.on("--tmp DIR", "Temporary directory for compilation",
+                         "  (default: #{options.tmp})") do |tmp|
+      options.tmp = tmp
+    end
+
+    opts.on_tail("-h", "--help", "Show this message") do
+      puts opts
+      exit
+    end
+  end
+
+  unparsed = opts.order(ARGV.dup) {|arg|
+    options.inputs << [options.current_format, arg]
+  }
+  if !unparsed.empty? or options.inputs.empty? 
+    puts opts
+    exit
+  end
+
+  return options
+end
+
+class Neuron_Output
+  def fire(at, weight)
+    $out << "#{id()}\t#{at}\t#{weight}\n"
+  end
+end
+
+def run
+  options = parse_cmdline()
+
+  Yinspire.commit(File.join(options.tmp, "Yinspire"))
+
+  $out = STDOUT
+  if options.output and options.output != "-"
+    $out = File.open(options.output, "w+")
+  end
+
+  sim = Simulator.new
+  sim.stimuli_tolerance = options.tolerance
+
+  loaders = {:yin => Loader_Yin, :graphml => Loader_GraphML, :json => Loader_JSON}
+  options.inputs.each do |format, file|
+    loaders[format].new(sim).load(file)
+  end
+
+  sim.run(options.stop_at)
+
+  $out.close if options.output and options.output != "-"
+end
+
+run()
