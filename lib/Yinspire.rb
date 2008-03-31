@@ -10,10 +10,10 @@ Infinity = 1.0/0.0
 Cplus2Ruby << %{
   #include <assert.h>
   #include <math.h>
-  #include "algo/Array.h"
-  #include "algo/binary_heap.h"
-  #include "algo/indexed_binary_heap.h"
-  #include "alloc/ruby_memory_allocator.h"
+  #include "Algorithms/Array.h"
+  #include "Algorithms/BinaryHeap.h"
+  #include "Algorithms/IndexedBinaryHeap.h"
+  #include "Allocators/RubyMemoryAllocator.h"
 
   #define real_exp expf
   #define real_fabs fabsf

@@ -47,7 +47,7 @@
 #ifndef __YINSPIRE__INDEXED_BINARY_HEAP__
 #define __YINSPIRE__INDEXED_BINARY_HEAP__
 
-#include "binary_heap.h"
+#include "BinaryHeap.h"
 
 template <typename E, class Acc=E>
 struct BinaryHeapIndexer
