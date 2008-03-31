@@ -55,6 +55,10 @@ def parse_cmdline
       options.current_format = t
     end
 
+    opts.on("-i", "--input FILE", "Input file") do |inp|
+      options.inputs << [options.current_format, inp]
+    end
+
     opts.on("-o", "--output FILE", "Filename to write output to",
                                    "  (default: stdout)") do |out|
       raise "only one output allowed" if options.output
