@@ -1,0 +1,24 @@
+---------------------------------------------------------
+Yinspire - An efficient spiking neural net simulator
+---------------------------------------------------------
+
+COPYRIGHT
+
+  Copyright (c) 2007, 2008 by Michael Neumann (mneumann@ntecs.de).
+  All rights reserved.
+
+LICENSE
+
+  Ruby License.
+
+INSTALLATION
+
+  (should work on any Unix easily)
+  gem install yinspire
+
+ABOUT
+
+  Yinspire is a very fast simulator for spiking neural nets. It's a
+  complete rewrite (using a mixture of Ruby and C++) of an existing
+  simulator called Inspire, which was developed at the University of
+  Karlsruhe.

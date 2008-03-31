@@ -5,7 +5,7 @@ spec = Gem::Specification.new do |s|
   s.version = "0.1.0"
   s.summary = "An efficient Spiking Neural Net Simulator"
   s.files = Dir['**/*']
-  s.add_dependency('cplus2ruby', '>= 1.1.0')
+  s.add_dependency('cplus2ruby', '>= 1.1.1')
   s.executables = ['yinspire']
 
   s.author = "Michael Neumann"
