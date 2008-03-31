@@ -21,15 +21,16 @@ LOADERS = {
 }
 
 DUMPERS = {
-  :dot => Dumper_Dot
+  :dot => Dumper_Dot,
+  :yin => Dumper_Yin
 }
 
 def parse_file_format(str, formats)
   file, format = str.split(":")
   format ||= File.extname(file)[1..-1]
-  raise "invalid FORMAT" unless format
+  raise "invalid FORMAT #{format}" unless format
   klass = formats[format.to_sym]
-  raise "invalid FORMAT" unless klass
+  raise "invalid FORMAT #{format}" unless klass
   return file, klass
 end
 
