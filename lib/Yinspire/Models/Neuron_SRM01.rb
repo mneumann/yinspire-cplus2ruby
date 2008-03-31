@@ -42,6 +42,7 @@ class Neuron_SRM01 < Neuron_Base
       /* Fire */
       @mem_pot = 0.0;
       @last_fire_time = at;
+      @simulator->record_fire(at, 0.0, this);
       stimulate_synapses(at, 0.0);
     }
   }

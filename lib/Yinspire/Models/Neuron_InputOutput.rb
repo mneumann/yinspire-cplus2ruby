@@ -7,17 +7,23 @@ require 'Yinspire/Models/Neuron_Base'
 class Neuron_InputOutput < Neuron_Base
 
   virtual :fire
-  method :fire, {:at => 'simtime'},{:weight => 'real'}, nil 
+  method :fire, {:at => 'simtime'},{:weight => 'real'}, nil
 
   # 
   # Process each stimuli separately, i.e. it does NOT 
   # add stimuli with the same timestamp together.
   #
   method :process, {:at => 'simtime'}, %{
+    simtime _at;
+    real _weight;
+
     while (!@stimuli_pq.empty() && @stimuli_pq.top().at <= at)
     {
-      fire(@stimuli_pq.top().at, @stimuli_pq.top().weight);
+      _at = @stimuli_pq.top().at;
+      _weight = @stimuli_pq.top().weight;
       @stimuli_pq.pop();
+      @simulator->record_fire(_at, _weight, this);
+      fire(_at, _weight);
     }
 
     /*

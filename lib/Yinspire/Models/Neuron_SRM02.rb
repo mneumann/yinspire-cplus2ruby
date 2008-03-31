@@ -55,6 +55,8 @@ class Neuron_SRM02 < Neuron_Base
         @reset = dynamic_reset + @u_reset;
       }
       @last_fire_time = at;
+
+      @simulator->record_fire(at, 0.0, this);
       stimulate_synapses(at, 0.0);
     }
   }
