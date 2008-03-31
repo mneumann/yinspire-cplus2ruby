@@ -1,4 +1,4 @@
-#!/usr/local/bin/ruby
+#!/usr/bin/env ruby
 
 # TODO: Dump at the end.
 
@@ -10,10 +10,17 @@ end
 begin
   require 'Yinspire'
 rescue LoadError
-  $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '../lib'))
+  $LOAD_PATH.unshift(File.expand_path(File.join(File.dirname(__FILE__), '..', 'lib')))
   require 'Yinspire'
 end
 require 'Yinspire/All'
+
+LOADERS = {
+  :yin => Loader_Yin,
+  :json => Loader_JSON,
+  :graphml => Loader_GraphML,
+  :spike => Loader_Spike
+}
 
 def parse_cmdline
   require 'optparse'
@@ -38,9 +45,9 @@ def parse_cmdline
       options.tolerance = n
     end
 
-    opts.on("-f", "--format FORMAT", [:yin, :json, :graphml],
+    opts.on("-f", "--format FORMAT", LOADERS.keys,
             "Select format type of input files",
-            "  (yin, json, graphml)") do |t|
+            "  (#{LOADERS.keys.join(', ')})") do |t|
       options.current_format = t
     end
 
@@ -91,9 +98,8 @@ def run
   sim = Simulator.new
   sim.stimuli_tolerance = options.tolerance
 
-  loaders = {:yin => Loader_Yin, :graphml => Loader_GraphML, :json => Loader_JSON}
   options.inputs.each do |format, file|
-    loaders[format].new(sim).load(file)
+    LOADERS[format].new(sim).load(file)
   end
 
   sim.run(options.stop_at)

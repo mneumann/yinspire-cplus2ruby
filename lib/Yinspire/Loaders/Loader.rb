@@ -8,11 +8,9 @@
 #
 class Loader
 
-  attr_accessor :entities
-
   def initialize(simulator)
-    @entities = Hash.new
     @simulator = simulator
+    @entities = @simulator.entities
   end
 
   def dump_entities

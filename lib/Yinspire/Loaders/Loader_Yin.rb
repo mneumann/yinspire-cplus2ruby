@@ -13,7 +13,6 @@ class Loader_Yin < Loader
   require 'enumerator'
 
   def load(filename)
-    @entities = Hash.new
     templates = {}
     hash = Hash.new
     YinScanner.new(File.read(filename)).scan do |cmd|
@@ -30,7 +29,7 @@ class Loader_Yin < Loader
 
         ids.each {|id| create_entity(type, id, hash) }
       when :connect
-        cmd.each_cons(2) do |from, to|
+        cmd.first.each_cons(2) do |from, to|
           from.each {|f|
             entity = @entities[f] 
             to.each {|t| entity.connect(@entities[t]) }

@@ -15,6 +15,12 @@ class Simulator
   property :event_counter, 'uint'
   property :fire_counter, 'uint'
 
+  attr_reader :entities
+
+  def initialize
+    @entities = Hash.new
+  end
+
   def run(stop_at=nil)
     schedule_run(stop_at || Infinity)
   end
