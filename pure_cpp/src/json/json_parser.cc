@@ -6,10 +6,10 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+#include <iostream>
 #include "json_parser.h"
 
 #define PB(x) values.push_back(x)
-#include <iostream>
 
 inline static jsonString* json_string(char* from, char* to)
 {
@@ -596,7 +596,6 @@ _again:
   return values[0];
 }
 
-#include <sys/mman.h>
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -642,6 +641,13 @@ jsonValue* jsonParser::parse_file(const char* filename)
   return res;
 }
 
+#ifdef WITHOUT_MMAP
+jsonValue* jsonParser::parse_file_mmap(const char* filename)
+{
+  return parse_file(filename);
+}
+#else
+#include <sys/mman.h>
 jsonValue* jsonParser::parse_file_mmap(const char* filename)
 {
   int fh;
@@ -676,3 +682,4 @@ jsonValue* jsonParser::parse_file_mmap(const char* filename)
 
   return res;
 }
+#endif

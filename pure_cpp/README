@@ -1,0 +1,2 @@
+Compile with -DWITHOUT_MMAP on Windows or any other platform that does
+not support mmap(2).
