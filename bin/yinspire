@@ -31,8 +31,12 @@ def parse_cmdline
   options.stop_at = Infinity
   options.tolerance = 0.0
   options.output = nil
-  options.inputs = []
+  options.record_id = Hash.new 
+  options.record_type = Hash.new 
+  options.force_compilation = false
   options.tmp = "/tmp/Yinspire"
+
+  options.inputs = []
 
   opts = OptionParser.new do |opts|
     opts.banner = "Usage: yinspire [options] [file] [options] [file] ..."
@@ -57,6 +61,20 @@ def parse_cmdline
       options.output = out
     end
 
+    opts.on("--record-id x,y,z", Array, "NeuralEntity ids for which to record fire events.",
+                                   "  (default: ALL)") do |ids|
+      ids.each {|i| options.record_id[i] = true} 
+    end
+
+    opts.on("--record-type x,y,z", Array, "NeuralEntity types for which to record fire events.",
+                                   "  (default: ALL)") do |types|
+      types.each {|i| options.record_type[i] = true} 
+    end
+
+    opts.on("--force-compilation", "Force (re-)compilation of Yinspire") do
+      options.force_compilation = true
+    end
+
     opts.on("--tmp DIR", "Temporary directory for compilation",
                          "  (default: #{options.tmp})") do |tmp|
       options.tmp = tmp
@@ -79,20 +97,47 @@ def parse_cmdline
   return options
 end
 
-class Neuron_Output
-  def fire(at, weight)
-    $out << "#{id()}\t#{at}\t#{weight}\n"
+class Simulator
+  EXT = "!!!EXTERNAL!!!".freeze
+  def record_fire(at, weight, source)
+    id = source ? source.id : EXT 
+
+    return if $yinspire_record_ids && !$yinspire_record_ids[id]
+    return if $yinspire_record_types && !$yinspire_record_types[source.class]
+
+    $yinspire_out << "#{id}\t#{weight}@#{at}\n"
   end
 end
 
 def run
   options = parse_cmdline()
 
-  Yinspire.commit(File.join(options.tmp, "Yinspire"))
+  Yinspire.commit(File.join(options.tmp, "Yinspire"), options.force_compilation)
 
-  $out = STDOUT
+  $yinspire_out = STDOUT
   if options.output and options.output != "-"
-    $out = File.open(options.output, "w+")
+    $yinspire_out = File.open(options.output, "w+")
+  end
+
+  if options.record_id.empty?
+    # nil == ALL
+    $yinspire_record_ids = nil
+  else
+    $yinspire_record_ids = options.record_id
+  end
+
+  if options.record_type.empty?
+    # nil == ALL
+    $yinspire_record_types = nil
+  else
+    begin
+      $yinspire_record_types = Hash.new
+      options.record_type.each {|t, _| $yinspire_record_types[NeuralEntity.class_from_name(t)] = true }
+    rescue ArgumentError
+      STDERR.puts "Invalid/unknown type specified in --record-type"
+      STDERR.puts "Use one of: #{ NeuralEntity.entity_type_map.keys.join(', ') }"
+      exit 1
+    end
   end
 
   sim = Simulator.new
@@ -104,7 +149,7 @@ def run
 
   sim.run(options.stop_at)
 
-  $out.close if options.output and options.output != "-"
+  $yinspire_out.close if options.output and options.output != "-"
 end
 
 run()
