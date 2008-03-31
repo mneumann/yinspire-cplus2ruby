@@ -18,6 +18,14 @@ class Loader_Spike < Loader
       while line = f.gets
         line.strip!
         next if line =~ /^#/ # comment
+
+        #
+        # The following code is to help Matlab to generate spike trains
+        # more easily and allows spaces before and after the "@", e.g.
+        # "123 @ 444".
+        #
+        line.gsub!(/\s+@\s+/, '')
+
         id, *spikes = line.split
         raise if spikes.empty?
         entity = @entities[id] || raise
