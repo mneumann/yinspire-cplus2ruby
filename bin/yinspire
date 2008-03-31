@@ -1,7 +1,5 @@
 #!/usr/bin/env ruby
 
-# TODO: Dump at the end.
-
 begin
   require 'rubygems'
 rescue LoadError
@@ -26,12 +24,20 @@ DUMPERS = {
   :dot => Dumper_Dot
 }
 
+def parse_file_format(str, formats)
+  file, format = str.split(":")
+  format ||= File.extname(file)[1..-1]
+  raise "invalid FORMAT" unless format
+  klass = formats[format.to_sym]
+  raise "invalid FORMAT" unless klass
+  return file, klass
+end
+
 def parse_cmdline
   require 'optparse'
   require 'ostruct'
 
   options = OpenStruct.new 
-  options.current_format = :yin
   options.stop_at = Infinity
   options.tolerance = 0.0
   options.output = nil
@@ -55,21 +61,15 @@ def parse_cmdline
       options.tolerance = n
     end
 
-    opts.on("-f", "--format FORMAT", LOADERS.keys,
-            "Select format type of files to load",
-            "  (#{LOADERS.keys.join(', ')})") do |t|
-      options.current_format = t
+    opts.on("-l", "--load FILE[:FORMAT]", "Load file",
+                                        "  (formats: #{LOADERS.keys.join(', ')})") do |ld|
+           
+      options.loads << parse_file_format(ld, LOADERS)
     end
 
-    opts.on("-l", "--load FILE", "Load file") do |ld|
-      options.loads << [options.current_format, ld]
-    end
-
-    opts.on("-d", "--dump FILE:FORMAT", "Dump net to file (after simulation)",
-                                        "  (formats: #{DUMPERS.keys.join(', ')})") do |t|
-      file, format = t.split(":")
-      raise "invalid FORMAT" if format.nil? or !DUMPERS.include?(format.to_sym)
-      options.dumps << [file, format.to_sym]
+    opts.on("-d", "--dump FILE[:FORMAT]", "Dump net to file (after simulation)",
+                                        "  (formats: #{DUMPERS.keys.join(', ')})") do |d|
+      options.dumps << parse_file_format(d, DUMPERS)
     end
 
     opts.on("-o", "--output FILE", "Filename to write output to",
@@ -107,9 +107,7 @@ def parse_cmdline
     end
   end
 
-  unparsed = opts.order(ARGV.dup) {|arg|
-    options.loads << [options.current_format, arg]
-  }
+  unparsed = opts.parse!(ARGV.dup)
   if !unparsed.empty? or options.loads.empty? 
     puts opts
     exit
@@ -164,8 +162,8 @@ def run
   sim = Simulator.new
   sim.stimuli_tolerance = options.tolerance
 
-  options.loads.each do |format, file|
-    LOADERS[format].new(sim).load(file)
+  options.loads.each do |file, klass|
+    klass.new(sim).load(file)
   end
 
   sim.run(options.stop_at) unless options.do_not_simulate
@@ -173,8 +171,8 @@ def run
   $yinspire_out.close if options.output and options.output != "-"
 
   # dump nets
-  options.dumps.each do |file, format|
-    dumper = DUMPERS[format].new(sim)
+  options.dumps.each do |file, klass|
+    dumper = klass.new(sim)
     if file == "-"
       dumper.dump(STDOUT)
     else
