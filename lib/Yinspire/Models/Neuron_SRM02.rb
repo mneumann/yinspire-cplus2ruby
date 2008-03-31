@@ -56,8 +56,8 @@ class Neuron_SRM02 < Neuron_Base
       }
       @last_fire_time = at;
 
-      @simulator->record_fire(at, 0.0, this);
-      stimulate_synapses(at, 0.0);
+      @simulator->record_fire(at, Infinity, this);
+      stimulate_synapses(at, Infinity);
     }
   }
 
