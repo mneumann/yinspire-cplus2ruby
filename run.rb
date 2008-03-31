@@ -1,5 +1,5 @@
 require 'rubygems'
-$LOAD_PATH.unshift "src"
+$LOAD_PATH.unshift "lib"
 
 require 'Yinspire'
 require 'Yinspire/Models/Neuron_Input'
