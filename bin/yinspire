@@ -22,6 +22,10 @@ LOADERS = {
   :spike => Loader_Spike
 }
 
+DUMPERS = {
+  :dot => Dumper_Dot
+}
+
 def parse_cmdline
   require 'optparse'
   require 'ostruct'
@@ -33,9 +37,11 @@ def parse_cmdline
   options.output = nil
   options.record_id = Hash.new 
   options.record_type = Hash.new 
+  options.do_not_simulate = false
   options.force_compilation = false
   options.tmp = "/tmp/Yinspire"
 
+  options.dumps = []
   options.inputs = []
 
   opts = OptionParser.new do |opts|
@@ -73,6 +79,17 @@ def parse_cmdline
     opts.on("--record-type x,y,z", Array, "NeuralEntity types for which to record fire events.",
                                    "  (default: ALL)") do |types|
       types.each {|i| options.record_type[i] = true} 
+    end
+
+    opts.on("-d", "--dump FILE:FORMAT", "Dump net to file (after simulation)",
+                                        "  (formats: #{DUMPERS.keys.join(', ')})") do |t|
+      file, format = t.split(":")
+      raise "invalid FORMAT" if format.nil? or !DUMPERS.include?(format.to_sym)
+      options.dumps << [file, format.to_sym]
+    end
+
+    opts.on("--do-not-simulate", "Do not simulate") do
+      options.do_not_simulate = true
     end
 
     opts.on("--force-compilation", "Force (re-)compilation of Yinspire") do
@@ -151,9 +168,19 @@ def run
     LOADERS[format].new(sim).load(file)
   end
 
-  sim.run(options.stop_at)
+  sim.run(options.stop_at) unless options.do_not_simulate
 
   $yinspire_out.close if options.output and options.output != "-"
+
+  # dump nets
+  options.dumps.each do |file, format|
+    dumper = DUMPERS[format].new(sim)
+    if file == "-"
+      dumper.dump(STDOUT)
+    else
+      File.open(file, 'w+') {|f| dumper.dump(f) }
+    end
+  end
 end
 
 run()

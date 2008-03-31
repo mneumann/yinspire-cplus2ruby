@@ -13,14 +13,6 @@ class Loader
     @entities = @simulator.entities
   end
 
-  def dump_entities
-    entities = {}
-    @entities.each {|id, entity|
-      entities[id] = [entity.entity_type || raise, entity.dump]  
-    }
-    entities
-  end
-
   protected
 
   #
