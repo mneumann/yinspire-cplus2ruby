@@ -42,7 +42,7 @@ def parse_cmdline
   options.tmp = "/tmp/Yinspire"
 
   options.dumps = []
-  options.inputs = []
+  options.loads = []
 
   opts = OptionParser.new do |opts|
     opts.banner = "Usage: yinspire [options] [file] [options] [file] ..."
@@ -56,13 +56,20 @@ def parse_cmdline
     end
 
     opts.on("-f", "--format FORMAT", LOADERS.keys,
-            "Select format type of input files",
+            "Select format type of files to load",
             "  (#{LOADERS.keys.join(', ')})") do |t|
       options.current_format = t
     end
 
-    opts.on("-i", "--input FILE", "Input file") do |inp|
-      options.inputs << [options.current_format, inp]
+    opts.on("-l", "--load FILE", "Load file") do |ld|
+      options.loads << [options.current_format, ld]
+    end
+
+    opts.on("-d", "--dump FILE:FORMAT", "Dump net to file (after simulation)",
+                                        "  (formats: #{DUMPERS.keys.join(', ')})") do |t|
+      file, format = t.split(":")
+      raise "invalid FORMAT" if format.nil? or !DUMPERS.include?(format.to_sym)
+      options.dumps << [file, format.to_sym]
     end
 
     opts.on("-o", "--output FILE", "Filename to write output to",
@@ -79,13 +86,6 @@ def parse_cmdline
     opts.on("--record-type x,y,z", Array, "NeuralEntity types for which to record fire events.",
                                    "  (default: ALL)") do |types|
       types.each {|i| options.record_type[i] = true} 
-    end
-
-    opts.on("-d", "--dump FILE:FORMAT", "Dump net to file (after simulation)",
-                                        "  (formats: #{DUMPERS.keys.join(', ')})") do |t|
-      file, format = t.split(":")
-      raise "invalid FORMAT" if format.nil? or !DUMPERS.include?(format.to_sym)
-      options.dumps << [file, format.to_sym]
     end
 
     opts.on("--do-not-simulate", "Do not simulate") do
@@ -108,9 +108,9 @@ def parse_cmdline
   end
 
   unparsed = opts.order(ARGV.dup) {|arg|
-    options.inputs << [options.current_format, arg]
+    options.loads << [options.current_format, arg]
   }
-  if !unparsed.empty? or options.inputs.empty? 
+  if !unparsed.empty? or options.loads.empty? 
     puts opts
     exit
   end
@@ -164,7 +164,7 @@ def run
   sim = Simulator.new
   sim.stimuli_tolerance = options.tolerance
 
-  options.inputs.each do |format, file|
+  options.loads.each do |format, file|
     LOADERS[format].new(sim).load(file)
   end
 
