@@ -51,7 +51,7 @@ def parse_cmdline
   options.loads = []
 
   opts = OptionParser.new do |opts|
-    opts.banner = "Usage: yinspire [options] [file] [options] [file] ..."
+    opts.banner = "Usage: yinspire [options]"
 
     opts.on("-s", "--stop-at N", Float, "Stop simulation at N (default: #{options.stop_at})") do |n|
       options.stop_at = n
